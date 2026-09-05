@@ -573,33 +573,109 @@ class Dashboard(QWidget):
         self._stack.setCurrentIndex(0)
         return host
 
+    def _toolbar(self):
+        """QGC 式紧凑状态条：顶部一条细栏，状态以“药丸”紧凑排布，不占大片空间"""
+        bar = QWidget()
+        bar.setObjectName("toolbar")
+        bar.setStyleSheet(
+            "QWidget#toolbar{background:rgba(20,33,61,235);"
+            "border:1px solid #2A3A60;border-radius:10px;}")
+        lay = QHBoxLayout(bar)
+        lay.setContentsMargins(12, 6, 12, 6)
+        lay.setSpacing(12)
+
+        def vsep():
+            s = QFrame()
+            s.setFixedSize(1, 16)
+            s.setStyleSheet("background:rgba(90,116,168,90);border:none;")
+            return s
+
+        def pill(label, color=TXT):
+            h = QHBoxLayout()
+            h.setSpacing(5)
+            lb = QLabel(label)
+            lb.setStyleSheet("color:%s;font-size:11px;" % TXT_SUB)
+            val = QLabel("--")
+            val.setStyleSheet("color:%s;font-size:13px;font-weight:800;" % color)
+            _mono(val)
+            h.addWidget(lb)
+            h.addWidget(val)
+            return h, val
+
+        # 连接
+        self._tool_dot = StatusLight("#5b6b80", 11)
+        self._tool_conn = QLabel("未连接")
+        self._tool_conn.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % TXT_SUB)
+        con = QHBoxLayout()
+        con.setSpacing(5)
+        con.addWidget(self._tool_dot)
+        con.addWidget(self._tool_conn)
+        lay.addLayout(con)
+
+        h, self._tool_mode = pill("模式", BLUE)
+        self._tool_mode.setText("手动")
+        lay.addWidget(vsep())
+        lay.addLayout(h)
+        h, self._tool_depth = pill("深度", CYAN)
+        lay.addWidget(vsep())
+        lay.addLayout(h)
+        h, self._tool_volt = pill("电压", GREEN)
+        lay.addWidget(vsep())
+        lay.addLayout(h)
+        h, self._tool_bat = pill("电量", GREEN)
+        lay.addWidget(vsep())
+        lay.addLayout(h)
+
+        lay.addStretch(1)
+        if getattr(self, "_lively", False):
+            tm = QLabel("演示模式")
+        else:
+            tm = QLabel("展会演示模式")
+        tm.setStyleSheet("color:%s;font-size:11px;" % TXT_SUB)
+        lay.addWidget(tm)
+        return bar
+
     def _overview_page(self):
+        """QGC 式首页：顶部紧凑状态条 + 左侧视频主画面(撑满) + 右侧/底部紧凑卡片(贴内容)"""
         page = QWidget()
-        grid = QGridLayout(page)
-        grid.setContentsMargins(16, 12, 16, 12)
-        grid.setSpacing(12)
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(12, 8, 12, 8)
+        outer.setSpacing(8)
+        outer.addWidget(self._toolbar())
 
         self._video_box, self._video_body = _panel("实时画面 · CAM 01", CYAN)
-        grid.addWidget(self._video_box, 0, 0, 2, 2)
         self._equip_box, self._equip_body = _panel("设备状态", GREEN)
-        grid.addWidget(self._equip_box, 0, 2, 1, 2)
         self._motion_box, self._motion_body = _panel("运动控制 · 手动模式", BLUE)
-        grid.addWidget(self._motion_box, 1, 2, 1, 2)
         self._task_box, self._task_body = _panel("任务信息", CYAN)
-        grid.addWidget(self._task_box, 2, 0)
         self._sensor_box, self._sensor_body = _panel("传感器数据", GREEN)
-        grid.addWidget(self._sensor_box, 2, 1)
         self._alarm_box, self._alarm_body = _panel("推进器输出与告警", YELLOW)
-        grid.addWidget(self._alarm_box, 2, 2, 1, 2)
 
-        grid.setColumnStretch(0, 4)
-        grid.setColumnStretch(1, 4)
-        grid.setColumnStretch(2, 4)
-        grid.setColumnStretch(3, 4)
-        grid.setRowStretch(0, 5)
-        grid.setRowStretch(1, 4)
-        grid.setRowStretch(2, 4)
-        grid.setColumnMinimumWidth(2, 320)
+        # 主区：左视频(主画面, 撑满) + 右紧凑卡片列(贴内容, 顶部对齐)
+        main = QHBoxLayout()
+        main.setSpacing(8)
+        main.addWidget(self._video_box, 5)
+        right = QVBoxLayout()
+        right.setSpacing(8)
+        for b in (self._equip_box, self._motion_box):
+            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)   # 高度贴内容, 不再撑满
+        right.addWidget(self._equip_box)
+        right.addWidget(self._motion_box)
+        right.addStretch(1)          # 卡片聚顶, 下方留白（QGC 仪表盘风）
+        main.addLayout(right, 4)
+        outer.addLayout(main, 1)
+
+        # 底部紧凑横带：任务信息 / 传感器数据 / 推进器输出与告警
+        bottom = QHBoxLayout()
+        bottom.setSpacing(8)
+        for b in (self._task_box, self._sensor_box, self._alarm_box):
+            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        self._task_box.setMinimumHeight(150)
+        self._sensor_box.setMinimumHeight(150)
+        self._alarm_box.setMinimumHeight(150)
+        bottom.addWidget(self._task_box, 1)
+        bottom.addWidget(self._sensor_box, 1)
+        bottom.addWidget(self._alarm_box, 2)
+        outer.addLayout(bottom)
 
         self._build_video()
         self._build_equipment()
@@ -615,7 +691,7 @@ class Dashboard(QWidget):
     def _monitor_page(self):
         page = QWidget()
         grid = QGridLayout(page)
-        grid.setContentsMargins(16, 12, 16, 12)
+        grid.setContentsMargins(12, 8, 12, 8)
         grid.setSpacing(12)
         box, body = _panel("实时监控 · 视频与关键数据", CYAN)
         self._monitor_video = QLabel("实时视频（连接 91 后显示）")
@@ -652,7 +728,7 @@ class Dashboard(QWidget):
     def _mission_page(self):
         page = QWidget()
         lay = QVBoxLayout(page)
-        lay.setContentsMargins(16, 12, 16, 12)
+        lay.setContentsMargins(12, 8, 12, 8)
         lay.setSpacing(12)
         box, body = _panel("任务规划 · 航点列表", CYAN)
         self._wp_table = QTableWidget(0, 4)
@@ -737,7 +813,7 @@ class Dashboard(QWidget):
     def _autonomous_page(self):
         page = QWidget()
         grid = QGridLayout(page)
-        grid.setContentsMargins(16, 12, 16, 12)
+        grid.setContentsMargins(12, 8, 12, 8)
         grid.setSpacing(12)
         box, body = _panel("自主控制 · 演示配置", BLUE)
         r = QHBoxLayout()
@@ -849,7 +925,7 @@ class Dashboard(QWidget):
     def _sonar_page(self):
         page = QWidget()
         lay = QVBoxLayout(page)
-        lay.setContentsMargins(16, 12, 16, 12)
+        lay.setContentsMargins(12, 8, 12, 8)
         lay.setSpacing(12)
         box, body = _panel("声纳探测 · 演示 / 待接入", CYAN)
         top = QHBoxLayout()
@@ -909,7 +985,7 @@ class Dashboard(QWidget):
     def _settings_page(self):
         page = QWidget()
         grid = QGridLayout(page)
-        grid.setContentsMargins(16, 12, 16, 12)
+        grid.setContentsMargins(12, 8, 12, 8)
         grid.setSpacing(12)
 
         box, body = _panel("系统设置 · 主控连接", CYAN)
@@ -1017,7 +1093,7 @@ class Dashboard(QWidget):
     def _data_page(self):
         page = QWidget()
         grid = QGridLayout(page)
-        grid.setContentsMargins(16, 12, 16, 12)
+        grid.setContentsMargins(12, 8, 12, 8)
         grid.setSpacing(12)
         box, body = _panel("数据管理 · 指令/遥测记录", CYAN)
         top = QHBoxLayout()
@@ -1087,7 +1163,7 @@ class Dashboard(QWidget):
     def _logs_page(self):
         page = QWidget()
         grid = QGridLayout(page)
-        grid.setContentsMargins(16, 12, 16, 12)
+        grid.setContentsMargins(12, 8, 12, 8)
         grid.setSpacing(12)
         box, body = _panel("日志信息 · 分级筛选", YELLOW)
         top = QHBoxLayout()
@@ -1235,7 +1311,7 @@ class Dashboard(QWidget):
         if os.path.exists(path):
             pm = QPixmap(path)
             if not pm.isNull():
-                photo.setPixmap(pm.scaledToHeight(210, Qt.SmoothTransformation))
+                photo.setPixmap(pm.scaledToHeight(160, Qt.SmoothTransformation))
         else:
             photo.setText("ROV 示意图（待放置俯视图）")
         photo.setStyleSheet(
@@ -1673,7 +1749,12 @@ class Dashboard(QWidget):
         self._online_dot.set_color(GREEN if ok else "#5b6b80")
         self._online_txt.setText("在线" if ok else "离线")
         self._online_txt.setStyleSheet(
-            "color:%s; font-size:12px;" % (GREEN if ok else TXT_SUB))
+            "color:%s; font-size:12px; font-weight:700;" % (GREEN if ok else TXT_SUB))
+        if hasattr(self, "_tool_dot"):
+            self._tool_dot.set_color(GREEN if ok else "#5b6b80")
+            self._tool_conn.setText("已连接" if ok else "未连接")
+            self._tool_conn.setStyleSheet(
+                "color:%s; font-size:12px; font-weight:700;" % (GREEN if ok else TXT_SUB))
 
     def _tick_ui(self):
         now = datetime.now()
@@ -1696,6 +1777,13 @@ class Dashboard(QWidget):
         for val, key, fmt, _col in self._sys_rows:
             val.setText(fmt % v_sys[key])
         self._bat_bar.setValue(int(v_sys["battery"]))
+        # 顶部紧凑状态条
+        if hasattr(self, "_tool_depth"):
+            self._tool_depth.setText("%.1f m" % v["depth_m"])
+        if hasattr(self, "_tool_volt"):
+            self._tool_volt.setText("%.1f V" % v_sys["voltage"])
+        if hasattr(self, "_tool_bat"):
+            self._tool_bat.setText("%.0f%%" % v_sys["battery"])
         if self._status_rows:
             self._status_rows[5][1].setText("%.1f °C" % v["motor_temp"])
         # 遥测记录（缺省归零）
