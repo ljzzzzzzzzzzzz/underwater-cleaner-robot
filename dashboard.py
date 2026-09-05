@@ -162,20 +162,14 @@ class DepthGauge(QWidget):
             yy = bottom - (bottom - top) * (m / 50.0)
             p.drawLine(bar_x - 8, int(yy), bar_x - 2, int(yy))
             p.drawText(QRectF(0, yy - 7, 20, 14), Qt.AlignRight | Qt.AlignVCenter, str(m))
-        # 当前深度值：贴到填充的最上沿（即当前刻度位置），并画一根指示线
-        if self._depth > 0:
-            marker_y = max(top + 4, bottom - fill_h)
-            p.setPen(QPen(QColor("#ffd166"), 2))
-            p.drawLine(bar_x - 10, int(marker_y), bar_x + bar_w + 4, int(marker_y))
-            p.setPen(QColor("#dcefff"))
-            p.setFont(QFont("Consolas", 12, QFont.Bold))
-            p.drawText(QRectF(bar_x + bar_w + 6, marker_y - 9, 26, 18),
-                       Qt.AlignLeft | Qt.AlignVCenter, "%.1f" % self._depth)
-        else:
-            p.setPen(QColor("#9fe7ff"))
-            p.setFont(QFont("Consolas", 12, QFont.Bold))
-            p.drawText(QRectF(bar_x - 6, bottom - 16, 40, 16),
-                       Qt.AlignRight | Qt.AlignVCenter, "0.0")
+        # 当前深度值：统一贴到填充最上沿（0 时即刻度底部），值画在轨道右侧，避免与刻度重叠
+        marker_y = max(top + 4, bottom - fill_h)
+        p.setPen(QPen(QColor("#ffd166"), 2))
+        p.drawLine(bar_x - 10, int(marker_y), bar_x + bar_w + 2, int(marker_y))
+        p.setPen(QColor("#dcefff"))
+        p.setFont(QFont("Consolas", 12, QFont.Bold))
+        p.drawText(QRectF(bar_x + bar_w + 8, marker_y - 9, 34, 18),
+                   Qt.AlignLeft | Qt.AlignVCenter, "%.1f" % self._depth)
         p.end()
 
 
@@ -1223,7 +1217,7 @@ class Dashboard(QWidget):
         body = self._video_body
         # 主视觉区只用于实时视频，不放实拍图（实拍图仅用于“设备状态”里的 ROV 视图）
         self._photo = None
-        # 顶部 OSD 行
+        # 顶部 OSD 行（加了一层半透明黑遮罩，避免未来亮色视频把文字淹没）
         osd = QHBoxLayout()
         osd.setSpacing(18)
         self._osd = {}
@@ -1244,7 +1238,11 @@ class Dashboard(QWidget):
             osd.addLayout(row)
             self._osd[key] = val
         osd.addStretch(1)
-        body.addLayout(osd)
+        osd_frame = QFrame()
+        osd_frame.setStyleSheet(
+            "QFrame{background:rgba(0,0,0,110);border:none;border-radius:8px;}")
+        osd_frame.setLayout(osd)
+        body.addWidget(osd_frame)
 
         vrow = QHBoxLayout()
         self._video_label = QLabel("未连接视频（连接 主控后自动显示）")
@@ -1317,6 +1315,31 @@ class Dashboard(QWidget):
         photo.setStyleSheet(
             "background:#0a1426; border:1px solid #2a4a7a; border-radius:10px;")
         body.addWidget(photo, 1)
+
+        # 2 通道推进器状态指示（软著：左/右）—— 健康圆点 + 实时输出%
+        thr = QHBoxLayout()
+        thr.setSpacing(16)
+        title_t = QLabel("推进器")
+        title_t.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT_SUB)
+        thr.addWidget(title_t)
+        self._thr_ind = []
+        for tag, name in (("T1", "左"), ("T2", "右")):
+            b = QHBoxLayout()
+            b.setSpacing(5)
+            dot = StatusLight(GREEN, 12)
+            tlab = QLabel("%s·%s" % (tag, name))
+            tlab.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT)
+            val = QLabel("0%")
+            val.setStyleSheet("color:%s; font-size:13px; font-weight:800;" % CYAN)
+            _mono(val)
+            b.addWidget(dot)
+            b.addWidget(tlab)
+            b.addWidget(val)
+            thr.addLayout(b)
+            self._thr_ind.append((dot, val))
+        thr.addStretch(1)
+        body.addLayout(thr)
+
         rows = [
             ("连接状态", "已连接", GREEN), ("工作模式", "手动模式", BLUE),
             ("推进器状态", "正常", GREEN), ("漏水检测", "正常", GREEN),
@@ -1477,23 +1500,43 @@ class Dashboard(QWidget):
 
     def _build_thruster_alarm(self):
         body = self._alarm_body
-        # 推进器输出（本机 2 个推进器：左/右）
-        r = QHBoxLayout()
-        self._bar_l = QProgressBar()
-        self._bar_r = QProgressBar()
-        for b in (self._bar_l, self._bar_r):
-            b.setRange(0, 255)
-            b.setValue(0)
-            b.setFixedHeight(12)
-            b.setObjectName("thrBar")
-            b.setFormat("")
-        self._bar_l.setStyleSheet("QProgressBar::chunk{background:%s;}" % GREEN)
-        self._bar_r.setStyleSheet("QProgressBar::chunk{background:%s;}" % CYAN)
-        r.addWidget(QLabel("左"))
-        r.addWidget(self._bar_l, 1)
-        r.addWidget(QLabel("右"))
-        r.addWidget(self._bar_r, 1)
-        body.addLayout(r)
+        # 推进器输出（软著 2 通道：左/右）—— 实时 PWM 柱状图
+        bars = QHBoxLayout()
+        bars.setSpacing(16)
+        for tag, name, color, bar_attr, pwm_attr in (
+                ("T1", "左", GREEN, "_bar_l", "_pwm_l"),
+                ("T2", "右", CYAN, "_bar_r", "_pwm_r")):
+            lay = QVBoxLayout()
+            lay.setSpacing(4)
+            hrow = QHBoxLayout()
+            hrow.setSpacing(6)
+            hd = QLabel(tag)
+            hd.setStyleSheet("color:%s; font-size:12px; font-weight:800;" % color)
+            nm = QLabel(name)
+            nm.setStyleSheet("color:%s; font-size:11px;" % TXT_SUB)
+            hrow.addWidget(hd)
+            hrow.addWidget(nm)
+            hrow.addStretch(1)
+            pwmL = QLabel("PWM")
+            pwmL.setStyleSheet("color:%s; font-size:10px;" % TXT_SUB)
+            pwm = QLabel("0")
+            pwm.setStyleSheet("color:%s; font-size:13px; font-weight:800;" % color)
+            _mono(pwm)
+            hrow.addWidget(pwmL)
+            hrow.addWidget(pwm)
+            setattr(self, pwm_attr, pwm)
+            bar = QProgressBar()
+            bar.setRange(0, 255)
+            bar.setValue(0)
+            bar.setFixedHeight(14)
+            bar.setObjectName("thrBar")
+            bar.setFormat("")
+            bar.setStyleSheet("QProgressBar::chunk{background:%s;}" % color)
+            setattr(self, bar_attr, bar)
+            lay.addLayout(hrow)
+            lay.addWidget(bar)
+            bars.addLayout(lay, 1)
+        body.addLayout(bars)
 
         self._log = LogView()
         body.addWidget(self._log, 1)
@@ -1737,6 +1780,14 @@ class Dashboard(QWidget):
         mag2 = p["spd2"] if p["dir2"] != 0 else 0
         self._bar_l.setValue(int(mag1))
         self._bar_r.setValue(int(mag2))
+        if hasattr(self, "_pwm_l"):
+            self._pwm_l.setText(str(int(mag1)))
+        if hasattr(self, "_pwm_r"):
+            self._pwm_r.setText(str(int(mag2)))
+        if getattr(self, "_thr_ind", None):
+            for (dot, val), m in zip(self._thr_ind, (mag1, mag2)):
+                val.setText("%d%%" % int(100 * m / 255.0))
+                dot.set_color(GREEN if m >= 0 else RED)
         if hasattr(self, "_dev_bar_l"):
             self._dev_bar_l.setValue(int(mag1))
             self._dev_bar_r.setValue(int(mag2))
