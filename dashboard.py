@@ -1301,27 +1301,38 @@ class Dashboard(QWidget):
 
     def _build_equipment(self):
         body = self._equip_body
-        # ROV 实拍图（干净展示，不放状态灯示意）
+        # ROV 模型视口（深海军蓝渐变 + 细描边 + 顶部高光，读作“带边框的小屏幕”，非纯黑）
         photo = QLabel()
         photo.setObjectName("rovPhoto")
         photo.setAlignment(Qt.AlignCenter)
+        photo.setFixedHeight(172)
         path = os.path.join(ASSET_DIR, "rov_photo.png")
         if os.path.exists(path):
             pm = QPixmap(path)
             if not pm.isNull():
-                photo.setPixmap(pm.scaledToHeight(160, Qt.SmoothTransformation))
+                photo.setPixmap(pm.scaledToHeight(140, Qt.SmoothTransformation))
         else:
             photo.setText("ROV 示意图（待放置俯视图）")
         photo.setStyleSheet(
-            "background:#0a1426; border:1px solid #2a4a7a; border-radius:10px;")
-        body.addWidget(photo, 1)
+            "background:qlineargradient(x1:0,y1:0,x2:0,y2:1,"
+            "stop:0 #0e2138,stop:1 #0a1526);"
+            "border:1px solid #2a4a7a;border-top:1px solid rgba(120,160,210,80);"
+            "border-radius:10px;")
+        body.addWidget(photo)
 
-        # 2 通道推进器状态指示（软著：左/右）—— 健康圆点 + 实时输出%
+        # 2 通道推进器状态指示（软著：左/右）—— 健康圆点 + 实时输出% （分组条）
         thr = QHBoxLayout()
-        thr.setSpacing(16)
+        thr.setSpacing(8)
+        grp = QFrame()
+        grp.setStyleSheet(
+            "QFrame{background:rgba(12,24,46,200);border:1px solid #24406b;"
+            "border-radius:8px;}")
+        gl = QHBoxLayout(grp)
+        gl.setContentsMargins(10, 5, 10, 5)
+        gl.setSpacing(10)
         title_t = QLabel("推进器")
         title_t.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT_SUB)
-        thr.addWidget(title_t)
+        gl.addWidget(title_t)
         self._thr_ind = []
         for tag, name in (("T1", "左"), ("T2", "右")):
             b = QHBoxLayout()
@@ -1335,8 +1346,10 @@ class Dashboard(QWidget):
             b.addWidget(dot)
             b.addWidget(tlab)
             b.addWidget(val)
-            thr.addLayout(b)
+            gl.addLayout(b)
             self._thr_ind.append((dot, val))
+        gl.addStretch(1)
+        thr.addWidget(grp)
         thr.addStretch(1)
         body.addLayout(thr)
 
