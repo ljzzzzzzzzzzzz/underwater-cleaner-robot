@@ -372,6 +372,8 @@ class Dashboard(QWidget):
         self.clock_timer.start(1000)
         self._tick_ui()
         self._flash("系统就绪 · 请连接 主控", "ok")
+        # 启动后自动连接主控（静默失败不弹窗，连不上可手动重连；延迟到窗口显示后再连）
+        QTimer.singleShot(300, lambda: self.connect_91(quiet=True))
 
     # =====================================================================
     # 界面搭建
@@ -1589,7 +1591,7 @@ class Dashboard(QWidget):
             self._sync_bars()
         return True
 
-    def connect_91(self):
+    def connect_91(self, quiet=False):
         ip = self._ip.text().strip() or proto.DEFAULT_IP
         port = self._port.text().strip() or str(proto.DEFAULT_PORT)
         if self._connected:
@@ -1601,10 +1603,11 @@ class Dashboard(QWidget):
             sock.connect((ip, int(port)))
         except Exception as e:
             self._flash("连接失败：%s" % e, "err")
-            QMessageBox.warning(self, "连接失败",
-                                "无法连接 主控 %s:%s\n\n原因：%s\n\n"
-                                "请检查设备/模拟服务器与网络（默认 192.168.1.91:12345）"
-                                % (ip, port, e))
+            if not quiet:
+                QMessageBox.warning(self, "连接失败",
+                                    "无法连接 主控 %s:%s\n\n原因：%s\n\n"
+                                    "请检查设备/模拟服务器与网络（默认 192.168.1.91:12345）"
+                                    % (ip, port, e))
             return
         self._sock = sock
         self._connected = True
