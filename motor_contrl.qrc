@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="runstatus">
+    <file>E:/CANpy/11.jpg</file>
+    <file>E:/CANpy/启动.png</file>
+    <file>E:/CANpy/停止 红.png</file>
+  </qresource>
+</RCC>

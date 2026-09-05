@@ -1,0 +1,1413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Motor</class>
+ <widget class="QWidget" name="Motor">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1520</width>
+    <height>960</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1320</width>
+    <height>860</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Motor Control Console</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="motor_contrl.qrc">
+    <normaloff>:/runstatus/E:/CANpy/11.jpg</normaloff>:/runstatus/E:/CANpy/11.jpg</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#Motor {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 #07131f,
+        stop: 0.55 #10253c,
+        stop: 1 #173753
+    );
+    color: #eef6ff;
+    font-family: &quot;Microsoft YaHei&quot;;
+}
+QFrame#sidePanel,
+QFrame#heroPanel,
+QFrame#brandPanel,
+QGroupBox,
+QStackedWidget,
+QWidget#page_motion,
+QWidget#page_vision,
+QWidget#page_debug {
+    background-color: rgba(8, 19, 31, 212);
+    border: 1px solid rgba(132, 188, 249, 62);
+    border-radius: 18px;
+}
+QGroupBox {
+    margin-top: 18px;
+    padding-top: 18px;
+    font-size: 15px;
+    font-weight: 700;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 16px;
+    padding: 0 8px;
+    color: #8fc8ff;
+}
+QLabel#label {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f7fbff;
+}
+QLabel#schoolLabel {
+    font-size: 14px;
+    color: #8fc8ff;
+    font-weight: 700;
+}
+QLabel#subtitleLabel {
+    font-size: 13px;
+    color: #8fb7d9;
+}
+QLabel#label_2,
+QLabel#label_3,
+QLabel#label_6 {
+    color: #d8e9fb;
+    font-size: 13px;
+    font-weight: 600;
+}
+QLabel#label_4,
+QLabel#label_7 {
+    color: #f3f8ff;
+    font-size: 16px;
+    font-weight: 700;
+}
+QLabel#motionHintLabel,
+QLabel#armHintLabel {
+    color: #7ea9ce;
+    font-size: 12px;
+    padding-left: 2px;
+}
+QLabel#motionCoreBadge,
+QLabel#armCoreBadge {
+    background-color: rgba(15, 38, 61, 220);
+    border: 1px solid rgba(132, 188, 249, 80);
+    border-radius: 20px;
+    color: #8fc8ff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 10px 14px;
+}
+QLabel#statusBadge {
+    background-color: rgba(46, 204, 113, 35);
+    color: #8ef0b4;
+    border: 1px solid rgba(46, 204, 113, 90);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+}
+QLabel#camera_label,
+QLabel#camera_label_2 {
+    background-color: rgba(5, 12, 20, 228);
+    border: 1px dashed rgba(143, 200, 255, 80);
+    border-radius: 14px;
+    color: #6f8ba6;
+    font-size: 14px;
+}
+QLabel#label_5 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f6fbff;
+}
+QLabel#brandDesc,
+QLabel#metric1Label,
+QLabel#metric2Label,
+QLabel#metric3Label {
+    color: #8fb7d9;
+    font-size: 12px;
+}
+QLabel#metric1Value,
+QLabel#metric2Value,
+QLabel#metric3Value {
+    color: #f7fbff;
+    font-size: 18px;
+    font-weight: 700;
+}
+QLineEdit,
+QPlainTextEdit {
+    background-color: rgba(6, 15, 25, 224);
+    border: 1px solid rgba(129, 181, 242, 70);
+    border-radius: 12px;
+    color: #eff7ff;
+    padding: 8px 10px;
+    selection-background-color: #1d7edb;
+}
+QLineEdit:focus,
+QPlainTextEdit:focus {
+    border: 1px solid rgba(91, 178, 255, 170);
+}
+QLineEdit#var_speed,
+QLineEdit#var_speed_2 {
+    min-height: 48px;
+    min-width: 128px;
+    font-size: 18px;
+    font-weight: 700;
+}
+QTableWidget {
+    background-color: rgba(6, 15, 25, 224);
+    border: 1px solid rgba(129, 181, 242, 70);
+    border-radius: 12px;
+    color: #eff7ff;
+    gridline-color: rgba(129, 181, 242, 40);
+    selection-background-color: rgba(32, 164, 243, 90);
+}
+QHeaderView::section {
+    background-color: rgba(20, 49, 76, 230);
+    color: #dff0ff;
+    border: none;
+    padding: 6px;
+    font-weight: 700;
+}
+QPushButton {
+    min-height: 36px;
+    border: none;
+    border-radius: 12px;
+    padding: 6px 14px;
+    background-color: #1f7ae0;
+    color: #f7fbff;
+    font-size: 12px;
+    font-weight: 700;
+}
+QPushButton:hover {
+    background-color: #2e8df4;
+}
+QPushButton:pressed {
+    background-color: #1664b9;
+}
+QPushButton:disabled {
+    background-color: rgba(93, 120, 148, 120);
+    color: rgba(247, 251, 255, 120);
+}
+QPushButton#stoplink,
+QPushButton#disable_motor,
+QPushButton#btn_arm_stop,
+QPushButton#pause_m,
+QPushButton#pause_m_2 {
+    background-color: #c44c4c;
+}
+QPushButton#stoplink:hover,
+QPushButton#disable_motor:hover,
+QPushButton#btn_arm_stop:hover,
+QPushButton#pause_m:hover,
+QPushButton#pause_m_2:hover {
+    background-color: #dd5d5d;
+}
+QPushButton#continue_m,
+QPushButton#continue_m_2,
+QPushButton#enable_motor,
+QPushButton#btn_arm_enable {
+    background-color: #199d68;
+}
+QPushButton#continue_m:hover,
+QPushButton#continue_m_2:hover,
+QPushButton#enable_motor:hover,
+QPushButton#btn_arm_enable:hover {
+    background-color: #20b579;
+}
+QPushButton#goForward,
+QPushButton#backForward,
+QPushButton#btn_left,
+QPushButton#btn_right,
+QPushButton#btn_arm_up,
+QPushButton#btn_arm_down,
+QPushButton#btn_arm_left,
+QPushButton#btn_arm_right {
+    min-height: 54px;
+    min-width: 92px;
+    font-size: 15px;
+}
+QPushButton#setSpeed,
+QPushButton#setSpeed_2,
+QPushButton#pause_m,
+QPushButton#pause_m_2,
+QPushButton#continue_m,
+QPushButton#continue_m_2 {
+    min-height: 48px;
+    font-size: 14px;
+}
+QPushButton#setSpeed,
+QPushButton#setSpeed_2 {
+    min-width: 180px;
+}
+QPushButton#nav_motion,
+QPushButton#nav_vision,
+QPushButton#nav_debug {
+    min-height: 48px;
+    text-align: left;
+    padding-left: 18px;
+    font-size: 14px;
+    background-color: rgba(21, 50, 77, 210);
+}
+QPushButton#nav_motion:checked,
+QPushButton#nav_vision:checked,
+QPushButton#nav_debug:checked {
+    background-color: #20a4f3;
+    color: #05131f;
+}
+QGroupBox#groupBox_4,
+QGroupBox#groupBox_10,
+QGroupBox#groupBox_8,
+QGroupBox#groupBox_9 {
+    background-color: rgba(9, 24, 38, 230);
+}
+PlotWidget {
+    background-color: rgba(5, 13, 22, 230);
+    border: 1px solid rgba(129, 181, 242, 70);
+    border-radius: 14px;
+}</string>
+  </property>
+  <layout class="QHBoxLayout" name="rootLayout">
+   <property name="spacing">
+    <number>16</number>
+   </property>
+   <property name="leftMargin">
+    <number>18</number>
+   </property>
+   <property name="topMargin">
+    <number>18</number>
+   </property>
+   <property name="rightMargin">
+    <number>18</number>
+   </property>
+   <property name="bottomMargin">
+    <number>18</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="sidePanel">
+       <property name="minimumSize">
+        <size>
+         <width>332</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>356</width>
+         <height>16777215</height>
+        </size>
+       </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <layout class="QVBoxLayout" name="sidePanelLayout">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <property name="leftMargin">
+       <number>18</number>
+      </property>
+      <property name="topMargin">
+       <number>18</number>
+      </property>
+      <property name="rightMargin">
+       <number>18</number>
+      </property>
+      <property name="bottomMargin">
+       <number>18</number>
+      </property>
+      <item>
+       <widget class="QFrame" name="brandPanel">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <layout class="QVBoxLayout" name="frameLayout">
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <item alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_school_name">
+           <property name="minimumSize">
+            <size>
+             <width>180</width>
+             <height>180</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>180</width>
+             <height>180</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="motor_contrl.qrc">:/runstatus/E:/CANpy/11.jpg</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="subtitleLabel">
+           <property name="text">
+            <string>广州航海学院</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="statusBadge">
+           <property name="text">
+            <string>READY</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="title">
+         <string>总线连接</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>16</number>
+         </property>
+         <property name="topMargin">
+          <number>20</number>
+         </property>
+         <property name="rightMargin">
+          <number>16</number>
+         </property>
+         <property name="bottomMargin">
+          <number>16</number>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>设备 IP</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="ipadd">
+             <property name="text">
+              <string>192.168.1.10</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>底盘端口</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="port">
+             <property name="text">
+              <string>4002</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>机械臂端口</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="port_2">
+             <property name="text">
+              <string>4001</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QPushButton" name="startlink">
+             <property name="text">
+              <string>开始连接</string>
+             </property>
+             <property name="icon">
+              <iconset resource="motor_contrl.qrc">
+               <normaloff>:/runstatus/E:/CANpy/启动.png</normaloff>:/runstatus/E:/CANpy/启动.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="stoplink">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>断开连接</string>
+             </property>
+             <property name="icon">
+              <iconset resource="motor_contrl.qrc">
+               <normaloff>:/runstatus/E:/CANpy/停止 红.png</normaloff>:/runstatus/E:/CANpy/停止 红.png</iconset>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox_nav">
+        <property name="title">
+         <string>功能导航</string>
+        </property>
+        <layout class="QVBoxLayout" name="navLayout">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>16</number>
+         </property>
+         <property name="topMargin">
+          <number>20</number>
+         </property>
+         <property name="rightMargin">
+          <number>16</number>
+         </property>
+         <property name="bottomMargin">
+          <number>16</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="nav_motion">
+           <property name="text">
+            <string>运动控制</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="nav_vision">
+           <property name="text">
+            <string>视觉跟踪</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="nav_debug">
+           <property name="text">
+            <string>报文调试</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="sideSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="mainAreaLayout">
+     <property name="spacing">
+      <number>16</number>
+     </property>
+     <item>
+      <widget class="QFrame" name="heroPanel">
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <layout class="QHBoxLayout" name="heroLayout">
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>18</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>18</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="heroTitle">
+          <property name="styleSheet">
+           <string notr="true">font-size: 22px; font-weight: 700; color: #f7fbff; background: transparent; border: none;</string>
+          </property>
+          <property name="text">
+           <string>任务执行区</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="heroSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="heroHint">
+          <property name="styleSheet">
+           <string notr="true">font-size: 13px; color: #8fb7d9; background: transparent; border: none;</string>
+          </property>
+          <property name="text">
+           <string>右侧按任务切页显示</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QStackedWidget" name="stackedWidget">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="page_motion">
+        <layout class="QVBoxLayout" name="pageMotionLayout">
+         <property name="spacing">
+          <number>16</number>
+         </property>
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <item>
+          <layout class="QGridLayout" name="motionTopGrid">
+           <property name="spacing">
+            <number>16</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QGroupBox" name="groupBox_5">
+             <property name="title">
+              <string>底盘总控制</string>
+             </property>
+             <layout class="QVBoxLayout" name="groupBox5Layout">
+              <property name="spacing">
+               <number>10</number>
+              </property>
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>20</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>16</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="load_pro_config">
+                <property name="text">
+                 <string>加载默认配置</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="enable_motor">
+                <property name="text">
+                 <string>使能电机</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="disable_motor">
+                <property name="text">
+                 <string>停止使能</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QGroupBox" name="groupBox_4">
+             <property name="title">
+              <string>PRO 速度模式</string>
+             </property>
+             <layout class="QVBoxLayout" name="groupBox4Layout">
+              <property name="spacing">
+               <number>12</number>
+              </property>
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>20</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>16</number>
+              </property>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <property name="spacing">
+                 <number>10</number>
+                </property>
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="label_4">
+                  <property name="text">
+                   <string>目标速度</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="var_speed">
+                  <property name="maximumSize">
+                   <size>
+                    <width>120</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>150</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="setSpeed">
+                  <property name="text">
+                   <string>应用速度</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="motionGrid">
+                <property name="spacing">
+                 <number>12</number>
+                </property>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="pause_m">
+                  <property name="text">
+                   <string>急停</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QPushButton" name="continue_m">
+                  <property name="text">
+                   <string>继续</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QGroupBox" name="groupBox_8">
+             <property name="title">
+              <string>底盘方向控制</string>
+             </property>
+             <layout class="QGridLayout" name="groupBox8Layout">
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>20</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>16</number>
+              </property>
+              <property name="spacing">
+               <number>12</number>
+              </property>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="goForward">
+                <property name="minimumSize">
+                 <size>
+                  <width>120</width>
+                  <height>66</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>前进</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="btn_left">
+                <property name="minimumSize">
+                 <size>
+                  <width>120</width>
+                  <height>66</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>左转</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="btn_right">
+                <property name="minimumSize">
+                 <size>
+                  <width>120</width>
+                  <height>66</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>右转</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="backForward">
+                <property name="minimumSize">
+                 <size>
+                  <width>120</width>
+                  <height>66</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>后退</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="motionBottomLayout">
+           <property name="spacing">
+            <number>16</number>
+           </property>
+           <item>
+            <widget class="QGroupBox" name="groupBox_7">
+             <property name="title">
+              <string>机械臂控制</string>
+             </property>
+             <layout class="QVBoxLayout" name="groupBox7Layout">
+              <property name="spacing">
+               <number>10</number>
+              </property>
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>20</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>16</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="btn_arm_config">
+                <property name="text">
+                 <string>加载机械臂配置</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btn_arm_enable">
+                <property name="text">
+                 <string>使能机械臂电机</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btn_arm_stop">
+                <property name="text">
+                 <string>停止机械臂使能</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_10">
+             <property name="title">
+              <string>机械臂速度模式</string>
+             </property>
+             <layout class="QHBoxLayout" name="groupBox10Layout">
+              <property name="spacing">
+               <number>16</number>
+              </property>
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>20</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>16</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="armSpeedColumn">
+                <property name="spacing">
+                 <number>12</number>
+                </property>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <property name="spacing">
+                   <number>10</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_7">
+                    <property name="text">
+                     <string>臂速设定</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="var_speed_2">
+                    <property name="maximumSize">
+                     <size>
+                      <width>120</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>150</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="setSpeed_2">
+                    <property name="text">
+                     <string>应用速度</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pause_m_2">
+                  <property name="text">
+                   <string>暂停机械臂</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="continue_m_2">
+                  <property name="text">
+                   <string>继续机械臂</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_9">
+                <property name="title">
+                 <string>机械臂方向</string>
+                </property>
+                <layout class="QGridLayout" name="groupBox9Layout">
+                 <property name="leftMargin">
+                  <number>16</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>20</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>16</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>16</number>
+                 </property>
+                 <property name="spacing">
+                  <number>12</number>
+                 </property>
+                 <item row="0" column="1">
+                  <widget class="QPushButton" name="btn_arm_up">
+                   <property name="text">
+                    <string>上</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QPushButton" name="btn_arm_left">
+                   <property name="text">
+                    <string>左</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QPushButton" name="btn_arm_right">
+                   <property name="text">
+                    <string>右</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QPushButton" name="btn_arm_down">
+                   <property name="text">
+                    <string>下</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_feedback">
+           <property name="title">
+            <string>电机闭环反馈</string>
+           </property>
+           <layout class="QVBoxLayout" name="feedbackLayout">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>20</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <widget class="QTableWidget" name="motor_feedback_table">
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="rowCount">
+               <number>6</number>
+              </property>
+              <property name="columnCount">
+               <number>5</number>
+              </property>
+              <attribute name="horizontalHeaderStretchLastSection">
+               <bool>true</bool>
+              </attribute>
+              <row>
+               <property name="text">
+                <string>电机1</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>电机2</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>电机3</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>电机4</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>机械臂5</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>机械臂6</string>
+               </property>
+              </row>
+              <column>
+               <property name="text">
+                <string>目标转速</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>实际转速</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>输出电流</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>位置脉冲</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>状态</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_vision">
+        <layout class="QVBoxLayout" name="pageVisionLayout">
+         <property name="spacing">
+          <number>16</number>
+         </property>
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <item>
+          <widget class="QGroupBox" name="groupBox_6">
+           <property name="title">
+            <string>视觉摄像头捕获</string>
+           </property>
+           <layout class="QVBoxLayout" name="cameraLayout">
+            <property name="spacing">
+             <number>14</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>20</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <layout class="QHBoxLayout" name="cameraDualLayout">
+              <property name="spacing">
+               <number>14</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="camera_label">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>340</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>主视觉画面</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="camera_label_2">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>340</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>辅助视觉画面</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="cameraButtonLayout">
+              <property name="spacing">
+               <number>12</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="open_cam_btn">
+                 <property name="text">
+                  <string>打开树莓派摄像头</string>
+                 </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="open_cam_btn_3">
+                <property name="text">
+                 <string>打开辅助摄像头</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_11">
+           <property name="title">
+            <string>坐标偏移波形图</string>
+           </property>
+           <layout class="QVBoxLayout" name="waveLayout">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>20</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <widget class="PlotWidget" name="wave_plot" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>360</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_debug">
+        <layout class="QVBoxLayout" name="pageDebugLayout">
+         <property name="spacing">
+          <number>16</number>
+         </property>
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <item>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
+            <string>发送区</string>
+           </property>
+           <layout class="QVBoxLayout" name="groupBox2Layout">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>20</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <widget class="QPlainTextEdit" name="send_text">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>280</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>接收区</string>
+           </property>
+           <layout class="QVBoxLayout" name="groupBox3Layout">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>20</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <widget class="QPlainTextEdit" name="recv_text">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>280</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="motor_contrl.qrc"/>
+ </resources>
+ <connections/>
+</ui>
