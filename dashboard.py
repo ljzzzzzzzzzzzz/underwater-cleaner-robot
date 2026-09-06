@@ -1534,11 +1534,14 @@ class Dashboard(QWidget):
         self._sensor_plot.showGrid(x=True, y=True, alpha=0.15)
         self._sensor_plot.hideButtons()
         self._sensor_plot.setMenuEnabled(False)
-        self._sensor_plot.setMinimumHeight(60)
-        self._sensor_plot.setMaximumHeight(90)
-        self._sensor_plot.setLabel("left", "深度 m", color=TXT_SUB)
+        self._sensor_plot.setMinimumHeight(64)
+        self._sensor_plot.setMaximumHeight(96)
+        # 紧凑 sparkline：隐藏坐标轴标签/刻度数值，避免与上方行重叠
         for ax in ("left", "bottom"):
-            self._sensor_plot.getAxis(ax).setTextPen(QColor(TXT_SUB))
+            axb = self._sensor_plot.getAxis(ax)
+            axb.setStyle(showValues=False)
+            axb.setPen(QColor("#3a5f8a"))
+            axb.setTextPen(QColor("#3a5f8a"))
         self._sensor_x = []
         self._sensor_h = {"depth": [], "temp": []}
         self._curve_depth = self._sensor_plot.plot(pen=pg.mkPen(CYAN, width=2))
