@@ -2025,10 +2025,13 @@ QSlider::sub-page:horizontal { background:rgba(49,196,243,120); border-radius:3p
 
 
 def main():
+    # 高 DPI 支持：让界面按真实屏幕 DPI(如125%)渲染，字体更大更清晰，避免“界面太小”
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     # 全局无衬线字体；数字走等宽（见 mono 属性 QSS）
-    app.setFont(QFont("Microsoft YaHei UI", 11))
+    app.setFont(QFont("Microsoft YaHei UI", 12))
     w = Dashboard()
     w.setWindowTitle("智能水下清洁机器人控制系统 V1.0 · 监控大屏")
     w.resize(1600, 940)
