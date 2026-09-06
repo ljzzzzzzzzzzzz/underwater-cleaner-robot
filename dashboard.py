@@ -660,14 +660,14 @@ class Dashboard(QWidget):
         main.addLayout(right, 4)
         outer.addLayout(main, 1)
 
-        # 底部紧凑横带：任务信息 / 传感器数据(带趋势) / 推进器输出与告警
+        # 底部横带：任务信息 / 传感器数据(带趋势) / 推进器输出与告警
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
         for b in (self._task_box, self._sensor_box, self._alarm_box):
-            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        self._task_box.setMinimumHeight(150)
-        self._sensor_box.setMinimumHeight(150)
-        self._alarm_box.setMinimumHeight(150)
+            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)   # 填满横带高度, 内容不挤压
+        self._task_box.setMinimumHeight(200)
+        self._sensor_box.setMinimumHeight(230)
+        self._alarm_box.setMinimumHeight(200)
         bottom.addWidget(self._task_box, 1)
         bottom.addWidget(self._sensor_box, 1)
         bottom.addWidget(self._alarm_box, 2)
@@ -1307,12 +1307,12 @@ class Dashboard(QWidget):
         photo = QLabel()
         photo.setObjectName("rovPhoto")
         photo.setAlignment(Qt.AlignCenter)
-        photo.setFixedHeight(148)
+        photo.setFixedHeight(118)
         path = os.path.join(ASSET_DIR, "rov_photo.png")
         if os.path.exists(path):
             pm = QPixmap(path)
             if not pm.isNull():
-                photo.setPixmap(pm.scaledToHeight(120, Qt.SmoothTransformation))
+                photo.setPixmap(pm.scaledToHeight(92, Qt.SmoothTransformation))
         else:
             photo.setText("ROV 示意图（待放置俯视图）")
         photo.setStyleSheet(
@@ -1534,6 +1534,8 @@ class Dashboard(QWidget):
         self._sensor_plot.showGrid(x=True, y=True, alpha=0.15)
         self._sensor_plot.hideButtons()
         self._sensor_plot.setMenuEnabled(False)
+        self._sensor_plot.setMinimumHeight(60)
+        self._sensor_plot.setMaximumHeight(90)
         self._sensor_plot.setLabel("left", "深度 m", color=TXT_SUB)
         for ax in ("left", "bottom"):
             self._sensor_plot.getAxis(ax).setTextPen(QColor(TXT_SUB))
