@@ -1,16 +1,16 @@
 @echo off
-chcp 65001 >nul
+chcp 936 >nul
 cd /d "%~dp0"
 
 set VENV=.venv
 if exist "..\.venv39\Scripts\python.exe" set VENV=..\.venv39
 if not exist "%VENV%\Scripts\python.exe" (
-  echo æœªæ‰¾åˆ°è™šæ‹Ÿç¯å¢ƒï¼Œè¯·å…ˆè¿è¡Œ å®‰è£…ä¾èµ–.bat
+  echo [´íÎó] Î´ÕÒµ½ĞéÄâ»·¾³£¬ÇëÏÈÔËĞĞ °²×°ÒÀÀµ.bat
   pause
   exit /b 1
 )
 
-echo å¯åŠ¨ æ ‘è“æ´¾91ä¸»æ§èŠ‚ç‚¹ æœ¬åœ°æ¨¡æ‹ŸæœåŠ¡å™¨ (127.0.0.1:12345) ...
-echo å…³é—­çª—å£å³åœæ­¢ã€‚Ctrl+C ä¹Ÿå¯é€€å‡ºã€‚
+echo Æô¶¯ Ê÷İ®ÅÉ91Ö÷¿Ø½Úµã ±¾µØÄ£Äâ·şÎñÆ÷ (127.0.0.1:12345) ...
+echo ¹Ø±Õ´°¿Ú¼´Í£Ö¹¡£Ctrl+C Ò²¿ÉÍË³ö¡£
 "%VENV%\Scripts\python.exe" -u mock_pi91_server.py --host 127.0.0.1 --port 12345
 pause

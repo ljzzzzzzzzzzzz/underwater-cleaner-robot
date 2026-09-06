@@ -1,37 +1,37 @@
 @echo off
-chcp 65001 >nul
+chcp 936 >nul
 REM ============================================================
-REM  æ™ºèƒ½æ°´ä¸‹æ¸…æ´æœºå™¨äººæŽ§åˆ¶ç³»ç»Ÿ - ä¸€é”®å®‰è£…è¿è¡ŒçŽ¯å¢ƒ
-REM  åœ¨æœ¬é¡¹ç›®ç›®å½•ä¸‹åˆ›å»º .venvï¼ˆä¼˜å…ˆç”¨ Python 3.9ï¼‰ï¼Œå®‰è£…ä¾èµ–
+REM  ÖÇÄÜË®ÏÂÇå½à»úÆ÷ÈË¿ØÖÆÏµÍ³ - Ò»¼ü°²×°ÔËÐÐ»·¾³
+REM  ÔÚ±¾ÏîÄ¿Ä¿Â¼ÏÂ´´½¨ .venv£¨ÓÅÏÈÓÃ Python 3.9£©£¬°²×°ÒÀÀµ
 REM ============================================================
 cd /d "%~dp0"
 
 set PY=py -3.9
 %PY% -c "import sys" 2>nul || set PY=python
 
-echo [1/3] åˆ›å»ºè™šæ‹ŸçŽ¯å¢ƒ .venv ...
+echo [1/3] ´´½¨ÐéÄâ»·¾³ .venv ...
 %PY% -m venv .venv
 if errorlevel 1 goto :err
 
-echo [2/3] å®‰è£…ä¾èµ–ï¼ˆå…ˆæ¸…åŽé•œåƒï¼Œå¤±è´¥è‡ªåŠ¨æ¢å®˜æ–¹æºï¼‰...
+echo [2/3] °²×°ÒÀÀµ£¨ÏÈÇå»ª¾µÏñ£¬Ê§°Ü×Ô¶¯»»¹Ù·½Ô´£©...
 ".venv\Scripts\python.exe" -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple >nul 2>&1
 ".venv\Scripts\python.exe" -m pip install PySide2==5.15.2.1 pyqtgraph "opencv-python-headless==4.10.0.84" "numpy<2" -i https://pypi.tuna.tsinghua.edu.cn/simple
 if errorlevel 1 (
-  echo æ¸…åŽé•œåƒå¤±è´¥ï¼Œæ”¹ç”¨å®˜æ–¹æºé‡è¯• ...
+  echo Çå»ª¾µÏñÊ§°Ü£¬¸ÄÓÃ¹Ù·½Ô´ÖØÊÔ ...
   ".venv\Scripts\python.exe" -m pip install PySide2==5.15.2.1 pyqtgraph "opencv-python-headless==4.10.0.84" "numpy<2"
   if errorlevel 1 goto :err
 )
 
-echo [3/3] æ ¡éªŒå®‰è£… ...
+echo [3/3] Ð£Ñé°²×° ...
 ".venv\Scripts\python.exe" -c "import PySide2, pyqtgraph, cv2, numpy; print('OK  PySide2', PySide2.__version__, '| cv2', cv2.__version__)"
 if errorlevel 1 goto :err
 
 echo.
-echo çŽ¯å¢ƒå°±ç»ªï¼å¯è¿è¡Œï¼š å¯åŠ¨æ¨¡æ‹Ÿ91æœåŠ¡å™¨.bat ä¸Ž å¯åŠ¨ä¸Šä½æœº.bat
+echo »·¾³¾ÍÐ÷£¡¿ÉÔËÐÐ£º Æô¶¯Ä£Äâ91·þÎñÆ÷.bat Óë Æô¶¯ÉÏÎ»»ú.bat
 pause
 exit /b 0
 
 :err
-echo å®‰è£…å¤±è´¥ï¼Œè¯·æ£€æŸ¥ç½‘ç»œåŽé‡è¯•ã€‚
+echo °²×°Ê§°Ü£¬Çë¼ì²éÍøÂçºóÖØÊÔ¡£
 pause
 exit /b 1

@@ -1,15 +1,15 @@
 @echo off
-chcp 65001 >nul
+chcp 936 >nul
 cd /d "%~dp0"
 
 set VENV=.venv
 if exist "..\.venv39\Scripts\python.exe" set VENV=..\.venv39
 if not exist "%VENV%\Scripts\python.exe" (
-  echo æœªæ‰¾åˆ°è™šæ‹Ÿç¯å¢ƒï¼Œè¯·å…ˆè¿è¡Œ å®‰è£…ä¾èµ–.bat
+  echo [´íÎó] Î´ÕÒµ½ĞéÄâ»·¾³£¬ÇëÏÈÔËĞĞ °²×°ÒÀÀµ.bat
   pause
   exit /b 1
 )
 
-echo å¯åŠ¨ æ™ºèƒ½æ°´ä¸‹æ¸…æ´æœºå™¨äººæ§åˆ¶ç³»ç»Ÿ ä¸Šä½æœº ...
+echo Æô¶¯ ÖÇÄÜË®ÏÂÇå½à»úÆ÷ÈË¿ØÖÆÏµÍ³ ÉÏÎ»»ú ...
 "%VENV%\Scripts\python.exe" main.py
 pause
