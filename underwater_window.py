@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import os
 import socket
-import struct
 import sys
 import threading
 import time
@@ -23,9 +22,8 @@ from datetime import datetime
 os.environ.setdefault("PYQTGRAPH_QT_LIB", "PySide2")
 
 import cv2
-import numpy as np
 import pyqtgraph as pg  # noqa: F401
-from PySide2.QtCore import QObject, Qt, QThread, QTimer, Signal
+from PySide2.QtCore import QObject, Qt, QTimer, Signal
 from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtWidgets import (
     QApplication,
@@ -51,6 +49,7 @@ import robot_protocol as proto
 from robot_contrl import Ui_Robot
 from logger import Logger
 from config_manager import ConfigManager
+from video_receiver import FrameReceiver
 
 APP_TITLE = "智能水下清洁机器人控制系统 V1.0"
 SCHOOL_LINE = "广州航海学院 · 人工智能学院"
@@ -58,59 +57,6 @@ SCHOOL_LINE = "广州航海学院 · 人工智能学院"
 C_ACCENT = "#20a4f3"
 C_GOOD = "#27ae60"
 C_BAD = "#e74c3c"
-
-
-# =========================================================================
-# 视频接收线程：4字节大端长度 + JPEG 帧（91 主控协议）
-# =========================================================================
-class FrameReceiver(QThread):
-    frame_ready = Signal(object)
-    broken = Signal(str)
-
-    def __init__(self, sock, parent=None):
-        super(FrameReceiver, self).__init__(parent)
-        self._sock = sock
-        self._stop = threading.Event()
-
-    def stop(self):
-        self._stop.set()
-
-    def run(self):
-        sock = self._sock
-        try:
-            sock.settimeout(1.0)
-            while not self._stop.is_set():
-                hdr = self._recv_exact(sock, 4)
-                if hdr is None:
-                    break
-                (n,) = struct.unpack("!I", hdr)
-                if n <= 0 or n > 16 * 1024 * 1024:
-                    continue
-                data = self._recv_exact(sock, n)
-                if data is None:
-                    break
-                img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
-                if img is not None:
-                    self.frame_ready.emit(img)
-        except Exception as exc:  # noqa: BLE001
-            self.broken.emit(str(exc))
-        finally:
-            self.broken.emit("视频接收线程已退出")
-
-    @staticmethod
-    def _recv_exact(sock, size):
-        buf = b""
-        while len(buf) < size:
-            try:
-                chunk = sock.recv(size - len(buf))
-            except socket.timeout:
-                continue
-            except OSError:
-                return None
-            if not chunk:
-                return None
-            buf += chunk
-        return buf
 
 
 # =========================================================================

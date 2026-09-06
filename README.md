@@ -62,16 +62,21 @@ MODE ANGLE d1,d2 s1,s2 BRUSH_STATE BRUSH_SPEED LIGHT
 ## 文件结构
 
 ```
-main.py               上位机入口
-underwater_window.py  主窗口（界面+通信+控制逻辑）
+main.py               上位机入口（执行 dashboard.main()）
+dashboard.py          主界面（单页大屏·界面+通信+控制逻辑）
+video_receiver.py     视频帧接收线程（4字节长度+JPEG 帧，dashboard 与 underwater_window 共用）
+underwater_window.py  旧三页版主窗口（对软著；现仅作参考/离屏冒烟）
 robot_contrl.py       .ui 运行期加载器
 robot_protocol.py     指令构造/解析/校验（GUI 与模拟器共用）
 mock_pi91_server.py   树莓派91主控节点 本地模拟服务器（含合成水下视频帧）
+p91_cam_server.py     真机树莓派91 摄像头推送服务（真实摄像头→JPEG 帧）
 self_check.py         工程自检：协议单测 + 模拟回路 + 可选离屏GUI冒烟
 motor_contrl.ui/.qrc  界面设计文件（Qt Designer 可编辑）
 logger.py / config_manager.py  日志与配置工具
-config.json           连接配置（robot91=192.168.1.91:12345，robot89=192.168.1.89:12345）
-预览_*.png            三页界面预览图（首页监控/作业控制台/指令调试）
+config.json           本机连接配置（git 忽略，用 config.example.json 拷贝改名）
+config.example.json   配置模板（提交到仓库，供他人拷贝为 config.json）
+requirements.txt      运行依赖清单（pip install -r requirements.txt）
+预览_*.png            界面预览图
 ```
 
 ## 质量自检
@@ -114,3 +119,15 @@ python self_check.py --gui  # 追加离屏 GUI 冒烟
 
 界面用 Qt Designer 编辑 `motor_contrl.ui`；新增控件后在
 `robot_contrl.py` 的控件暴露表补充 objectName 即可。
+
+## 协作开发
+
+- **环境**：他人可直接 `pip install -r requirements.txt`，不必依赖 `安装依赖.bat`；
+  `.venv`、`logs/`、`data/`、`config.json` 已 git 忽略。
+- **配置**：复制 `config.example.json` 为 `config.json`，按自己机器改地址/推进器朝向。
+- **入口唯一**：正式运行以 `main.py → dashboard.py`（单页大屏版）为准；`underwater_window.py`
+  仅作对软著参考，其视频接收线程已抽到公共组件 `video_receiver.py`。
+- **协议是契约**：改通信格式务必同步 `robot_protocol.py` 与本文档；提交前跑 `python self_check.py`。
+- **流程**：每个人在独立分支开发，`git pull` 后再改，合回主分支走合并/评审；按
+  协议/GUI/节点/工具 模块划分职责。
+

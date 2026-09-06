@@ -1,0 +1,6 @@
+# 智能水下清洁机器人控制系统 · 运行依赖
+# 安装：pip install -r requirements.txt
+PySide2==5.15.2.1
+pyqtgraph>=0.13
+opencv-python-headless==4.10.0.84
+numpy<2

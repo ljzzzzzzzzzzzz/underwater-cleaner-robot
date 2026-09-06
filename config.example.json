@@ -1,0 +1,15 @@
+{
+  "robot91": {
+    "ip": "192.168.1.91",
+    "port": 12345,
+    "thruster_layout": "normal"
+  },
+  "system": {
+    "log_dir": "logs",
+    "data_dir": "data",
+    "auto_reconnect": true,
+    "reconnect_interval": 3,
+    "max_reconnect_attempts": 10,
+    "feedback_poll_interval": 300
+  }
+}

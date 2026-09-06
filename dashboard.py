@@ -59,7 +59,7 @@ from PySide2.QtWidgets import (
 import robot_protocol as proto
 from logger import Logger
 from config_manager import ConfigManager
-from underwater_window import FrameReceiver  # 复用 4字节+JPEG 帧接收线程
+from video_receiver import FrameReceiver  # 4字节+JPEG 帧接收线程（公共组件）
 
 # ---------------- 调色规范 ----------------
 BG0 = "#0B132B"
