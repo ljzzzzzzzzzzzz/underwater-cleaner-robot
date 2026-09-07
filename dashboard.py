@@ -726,7 +726,30 @@ class Dashboard(QWidget):
         lay = QVBoxLayout(page)
         lay.setContentsMargins(12, 8, 12, 8)
         lay.setSpacing(12)
-        box, body = _panel("任务规划 · 航点列表", CYAN)
+        box, body = _panel("任务规划 · 航点与执行", CYAN)
+
+        # 任务配置（模式/深度/速度）
+        cfg = QHBoxLayout()
+        cfg.setSpacing(10)
+        cfg.addWidget(QLabel("任务模式"))
+        self._wp_mode = QComboBox()
+        self._wp_mode.addItems(["定深巡航", "定速巡航", "循迹"])
+        cfg.addWidget(self._wp_mode)
+        cfg.addWidget(QLabel("目标深度"))
+        self._wp_depth = QSpinBox()
+        self._wp_depth.setRange(0, 50)
+        self._wp_depth.setValue(5)
+        self._wp_depth.setSuffix(" m")
+        cfg.addWidget(self._wp_depth)
+        cfg.addWidget(QLabel("巡航速度"))
+        self._wp_speed = QSpinBox()
+        self._wp_speed.setRange(0, 255)
+        self._wp_speed.setValue(120)
+        self._wp_speed.setSuffix(" PWM")
+        cfg.addWidget(self._wp_speed)
+        cfg.addStretch(1)
+        body.addLayout(cfg)
+
         self._wp_table = QTableWidget(0, 4)
         self._wp_table.setHorizontalHeaderLabels(["航点", "X(m)", "Y(m)", "动作"])
         self._wp_table.setEditTriggers(QTableWidget.AllEditTriggers)   # 可编辑，双击单元格输入
@@ -736,19 +759,41 @@ class Dashboard(QWidget):
             self._wp_table.insertRow(r)
             for c, val in enumerate([str(i), str(x), str(y), "获取图像"]):
                 self._wp_table.setItem(r, c, QTableWidgetItem(val))
+
+        # 编辑 + 执行控制
         brow = QHBoxLayout()
-        btn_add = QPushButton("添加航点")
-        btn_del = QPushButton("删除选中航点")
-        btn_run = QPushButton("下发规划")
-        for b in (btn_add, btn_del, btn_run):
+        brow.setSpacing(8)
+        for name, handler, ob in (("添加航点", self._add_waypoint, "ghostBtn"),
+                                  ("删除选中", self._del_waypoint, "ghostBtn"),
+                                  ("全部清除", self._clear_waypoints, "ghostBtn")):
+            b = QPushButton(name)
+            b.setObjectName(ob)
+            b.clicked.connect(handler)
+            brow.addWidget(b)
+        brow.addStretch(1)
+        for name, handler in (("▶ 开始任务", self._start_mission),
+                              ("⏸ 暂停", self._pause_mission),
+                              ("⏹ 停止", self._stop_mission)):
+            b = QPushButton(name)
             b.setObjectName("solidBtn")
-        btn_add.clicked.connect(self._add_waypoint)
-        btn_del.clicked.connect(self._del_waypoint)
-        btn_run.clicked.connect(self._submit_mission)
-        brow.addWidget(btn_add)
-        brow.addWidget(btn_del)
-        brow.addWidget(btn_run)
+            b.clicked.connect(handler)
+            brow.addWidget(b)
         body.addLayout(brow)
+
+        # 执行状态 + 进度
+        self._wp_prog = QProgressBar()
+        self._wp_prog.setRange(0, 100)
+        self._wp_prog.setValue(0)
+        self._wp_prog.setFixedHeight(14)
+        self._wp_prog.setFormat("进度 %p%")
+        self._wp_prog.setStyleSheet(
+            "QProgressBar{background:#0b1730;border:1px solid #23436e;border-radius:4px;"
+            "text-align:center;color:%s;}"
+            "QProgressBar::chunk{background:%s;border-radius:3px;}" % (TXT_SUB, CYAN))
+        body.addWidget(self._wp_prog)
+        self._wp_state = QLabel("空闲 · 未开始 · 共 %d 个航点" % self._wp_table.rowCount())
+        self._wp_state.setStyleSheet("color:%s; font-size:14px; font-weight:700;" % TXT_SUB)
+        body.addWidget(self._wp_state)
         lay.addWidget(box, 1)
 
         pbox, pbody = _panel("路径预览", CYAN)
@@ -806,34 +851,109 @@ class Dashboard(QWidget):
         rows = self._wp_table.rowCount()
         self._flash("任务规划：共 %d 个航点（演示——待接入任务系统后下发）" % rows, "warn")
 
+    def _clear_waypoints(self):
+        self._wp_table.setRowCount(0)
+        self._refresh_path_preview()
+        self._wp_prog.setValue(0)
+        self._wp_state.setText("已清空航点列表")
+        self._flash("已清空全部航点", "info")
+
+    def _start_mission(self):
+        n = self._wp_table.rowCount()
+        self._wp_prog.setValue(0)
+        self._wp_state.setText("运行中 · %s · 开始执行 %d 个航点" % (self._wp_mode.currentText(), n))
+        self._flash("任务开始：%s · %d 个航点 · 深度 %d m · 速度 %d PWM"
+                    % (self._wp_mode.currentText(), n, self._wp_depth.value(), self._wp_speed.value()),
+                    "ok")
+
+    def _pause_mission(self):
+        self._wp_state.setText("已暂停 · 等待继续")
+        self._flash("任务已暂停", "info")
+
+    def _stop_mission(self):
+        self._wp_prog.setValue(0)
+        self._wp_state.setText("已停止 · 任务终止")
+        self._flash("任务已停止", "warn")
+
     def _autonomous_page(self):
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(12, 8, 12, 8)
         grid.setSpacing(12)
-        box, body = _panel("自主控制 · 演示配置", BLUE)
+        box, body = _panel("自主控制 · 参数与控制", BLUE)
         r = QHBoxLayout()
         r.addWidget(QLabel("控制模式"))
         self._auto_mode = QComboBox()
-        self._auto_mode.addItems(["手动控制", "自主任务", "姿态保持"])
+        self._auto_mode.addItems(["手动控制", "自主任务", "姿态保持", "定深控制", "定速控制"])
         self._auto_mode.setCurrentIndex(0)
-        self._auto_mode.setMaximumWidth(300)
+        self._auto_mode.setMaximumWidth(280)
         r.addWidget(self._auto_mode)
         r.addStretch(1)
         body.addLayout(r)
-        r2 = QHBoxLayout()
-        r2.addWidget(QLabel("最大速度(PWM)"))
+
+        # 参数行1：目标深度 / 目标航向
+        prm = QHBoxLayout()
+        prm.setSpacing(10)
+        prm.addWidget(QLabel("目标深度"))
+        self._auto_depth = QSpinBox()
+        self._auto_depth.setRange(0, 50)
+        self._auto_depth.setValue(5)
+        self._auto_depth.setSuffix(" m")
+        prm.addWidget(self._auto_depth)
+        prm.addWidget(QLabel("目标航向"))
+        self._auto_yaw = QSpinBox()
+        self._auto_yaw.setRange(0, 360)
+        self._auto_yaw.setValue(90)
+        self._auto_yaw.setSuffix("°")
+        prm.addWidget(self._auto_yaw)
+        prm.addStretch(1)
+        body.addLayout(prm)
+
+        # 参数行2：巡航速度 / 推力上限
+        prm2 = QHBoxLayout()
+        prm2.setSpacing(10)
+        prm2.addWidget(QLabel("巡航速度"))
         self._auto_speed = QSpinBox()
         self._auto_speed.setRange(0, 255)
         self._auto_speed.setValue(150)
-        self._auto_speed.setMaximumWidth(120)
-        r2.addWidget(self._auto_speed)
-        r2.addStretch(1)
-        body.addLayout(r2)
+        self._auto_speed.setSuffix("PWM")
+        prm2.addWidget(self._auto_speed)
+        prm2.addWidget(QLabel("推力上限"))
+        self._auto_pwm = QSpinBox()
+        self._auto_pwm.setRange(0, 255)
+        self._auto_pwm.setValue(200)
+        self._auto_pwm.setSuffix("PWM")
+        prm2.addWidget(self._auto_pwm)
+        prm2.addStretch(1)
+        body.addLayout(prm2)
+
+        # 运行状态
+        st = QHBoxLayout()
+        st.setSpacing(8)
+        self._auto_dot = StatusLight("#5b6b80", 12)
+        self._auto_state = QLabel("就绪 · 待机")
+        self._auto_state.setStyleSheet("color:%s; font-size:14px; font-weight:700;" % TXT_SUB)
+        st.addWidget(self._auto_dot)
+        st.addWidget(self._auto_state)
+        st.addStretch(1)
+        body.addLayout(st)
+
+        # 控制按钮
+        ctrls = QHBoxLayout()
+        ctrls.setSpacing(8)
         self._auto_en = QPushButton("启用自主控制")
         self._auto_en.setObjectName("solidBtn")
         self._auto_en.clicked.connect(self._toggle_auto)
-        body.addWidget(self._auto_en)
+        self._auto_pause = QPushButton("⏸ 暂停")
+        self._auto_pause.setObjectName("ghostBtn")
+        self._auto_pause.clicked.connect(self._pause_auto)
+        self._auto_stop = QPushButton("⏹ 急停")
+        self._auto_stop.setObjectName("solidBtn")
+        self._auto_stop.clicked.connect(self._stop_auto)
+        ctrls.addWidget(self._auto_en)
+        ctrls.addWidget(self._auto_pause)
+        ctrls.addWidget(self._auto_stop)
+        body.addLayout(ctrls)
         body.addStretch(1)
         grid.addWidget(box, 0, 0)
         grid.setColumnStretch(0, 2)
@@ -911,43 +1031,98 @@ class Dashboard(QWidget):
     def _toggle_auto(self):
         mode = self._auto_mode.currentText()
         if mode == "手动控制":
+            self._auto_dot.set_color("#5b6b80")
+            self._auto_state.setText("就绪 · 待机")
             self._flash("自主控制：已切回手动控制", "info")
         else:
-            self._flash("自主控制：%s（演示——待下位机/任务数据接入）" % mode, "warn")
+            self._auto_dot.set_color(GREEN)
+            self._auto_state.setText("运行中 · %s · 深度%d m · 航向%d°" % (
+                mode, self._auto_depth.value(), self._auto_yaw.value()))
+            self._flash("自主控制：%s（演示——待下位机/任务数据接入）" % mode, "ok")
+
+    def _pause_auto(self):
+        self._auto_dot.set_color(YELLOW)
+        self._auto_state.setText("已暂停 · 等待继续")
+        self._flash("自主控制：已暂停", "info")
+
+    def _stop_auto(self):
+        self._auto_dot.set_color(RED)
+        self._auto_state.setText("已急停 · 安全停机")
+        self._flash("自主控制：已急停", "err")
 
     # =====================================================================
     # 声纳探测（演示波形 / 待接入真声纳）
     # =====================================================================
     def _sonar_page(self):
         page = QWidget()
-        lay = QVBoxLayout(page)
-        lay.setContentsMargins(12, 8, 12, 8)
-        lay.setSpacing(12)
-        box, body = _panel("声纳探测 · 演示 / 待接入", CYAN)
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(12, 8, 12, 8)
+        outer.setSpacing(12)
+
+        # 探测设置 + 状态
+        box, body = _panel("声纳探测 · 参数与状态", CYAN)
+        cfg = QHBoxLayout()
+        cfg.setSpacing(10)
+        cfg.addWidget(QLabel("量程"))
+        self._sonar_range = QSpinBox()
+        self._sonar_range.setRange(10, 200)
+        self._sonar_range.setValue(50)
+        self._sonar_range.setSuffix(" m")
+        cfg.addWidget(self._sonar_range)
+        cfg.addWidget(QLabel("增益"))
+        self._sonar_gain = QSpinBox()
+        self._sonar_gain.setRange(0, 100)
+        self._sonar_gain.setValue(40)
+        cfg.addWidget(self._sonar_gain)
+        cfg.addWidget(QLabel("频率"))
+        self._sonar_freq = QComboBox()
+        self._sonar_freq.addItems(["675 kHz", "700 kHz", "1.2 MHz"])
+        cfg.addWidget(self._sonar_freq)
+        cfg.addStretch(1)
+        self._sonar_en = QPushButton("开启探测")
+        self._sonar_en.setObjectName("solidBtn")
+        self._sonar_en.setCheckable(True)
+        self._sonar_en.setChecked(False)
+        self._sonar_en.toggled.connect(self._toggle_sonar)
+        cfg.addWidget(self._sonar_en)
+        body.addLayout(cfg)
+
         top = QHBoxLayout()
         grp1 = QVBoxLayout()
         lab1 = QLabel("探测距离")
         lab1.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
         self._sonar_dist = QLabel("-- m")
-        self._sonar_dist.setStyleSheet("color:%s; font-size:28px; font-weight:800;" % TXT)
+        self._sonar_dist.setStyleSheet("color:%s; font-size:24px; font-weight:800;" % TXT)
         _mono(self._sonar_dist)
         grp1.addWidget(lab1)
         grp1.addWidget(self._sonar_dist)
         grp2 = QVBoxLayout()
         lab2 = QLabel("目标状态")
         lab2.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
-        self._sonar_target = QLabel("无目标")
+        self._sonar_target = QLabel("未开机")
         self._sonar_target.setStyleSheet(
-            "color:%s; font-size:20px; font-weight:800;" % TXT_SUB)
+            "color:%s; font-size:18px; font-weight:800;" % TXT_SUB)
         grp2.addWidget(lab2)
         grp2.addWidget(self._sonar_target)
+        grp3 = QVBoxLayout()
+        lab3 = QLabel("目标数量")
+        lab3.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
+        self._sonar_cnt = QLabel("0")
+        self._sonar_cnt.setStyleSheet("color:%s; font-size:24px; font-weight:800;" % GREEN)
+        _mono(self._sonar_cnt)
+        grp3.addWidget(lab3)
+        grp3.addWidget(self._sonar_cnt)
         top.addLayout(grp1)
         top.addSpacing(40)
         top.addLayout(grp2)
+        top.addSpacing(40)
+        top.addLayout(grp3)
         top.addStretch(1)
         body.addLayout(top)
+        outer.addWidget(box)
 
-        # 保留曲线图框与坐标轴（数据归零，不跑随机）
+        # 声纳回波图（展会默认归零，不跑随机）
+        plot_box, plot_body = _panel("声纳回波 · 距离扫描", CYAN)
         self._sonar_plot = pg.PlotWidget()
         self._sonar_plot.setBackground(QColor(BG0))
         self._sonar_plot.showGrid(x=True, y=True, alpha=0.15)
@@ -958,20 +1133,35 @@ class Dashboard(QWidget):
         self._sonar_plot.setXRange(0, 50)
         self._sonar_zero = self._sonar_plot.plot(pen=pg.mkPen("#31c4f3", width=2))
         self._sonar_zero.setData([0, 50], [0, 0])
-        body.addWidget(self._sonar_plot, 1)
+        plot_body.addWidget(self._sonar_plot, 1)
+        outer.addWidget(plot_box, 2)
 
-        lay.addWidget(box)
+        # 目标列表
+        tgt_box, tgt_body = _panel("目标列表", GREEN)
+        self._sonar_table = QTableWidget(0, 4)
+        self._sonar_table.setHorizontalHeaderLabels(["#", "方位角°", "距离m", "强度"])
+        self._sonar_table.horizontalHeader().setStretchLastSection(True)
+        self._sonar_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self._sonar_table.setAlternatingRowColors(True)
+        tgt_body.addWidget(self._sonar_table, 1)
+        outer.addWidget(tgt_box, 1)
+
         self._update_sonar()
         return page
+
+    def _toggle_sonar(self, on):
+        self._sonar_en.setText("停止探测" if on else "开启探测")
+        self._sonar_target.setText("扫描中" if on else "已停止")
+        self._sonar_target.setStyleSheet(
+            "color:%s; font-size:18px; font-weight:800;" % (GREEN if on else TXT_SUB))
+        self._flash("声纳探测：%s（演示——待接入真声纳数据）" % ("开启" if on else "停止"), "info")
 
     def _update_sonar(self):
         if not hasattr(self, "_sonar_target"):
             return
         # 展会默认归零：不跑随机数
-        self._sonar_dist.setText("0.0 m")
-        self._sonar_target.setText("无目标")
-        self._sonar_target.setStyleSheet(
-            "color:%s; font-size:20px; font-weight:800;" % TXT_SUB)
+        self._sonar_dist.setText("0.0 m" if self._sonar_en.isChecked() else "-- m")
+        self._sonar_cnt.setText("0")
         if hasattr(self, "_sonar_zero"):
             self._sonar_zero.setData([0, 50], [0, 0])
 
@@ -1108,6 +1298,26 @@ class Dashboard(QWidget):
         top.addStretch(1)
         top.addWidget(self._stat_rec)
         body.addLayout(top)
+
+        # 筛选行：类型 + 关键字搜索 + 清空
+        filt = QHBoxLayout()
+        filt.setSpacing(10)
+        filt.addWidget(QLabel("类型"))
+        self._data_type = QComboBox()
+        self._data_type.addItems(["全部", "指令", "遥测"])
+        self._data_type.currentIndexChanged.connect(self._apply_data_filter)
+        filt.addWidget(self._data_type)
+        filt.addWidget(QLabel("搜索"))
+        self._data_search = QLineEdit()
+        self._data_search.setPlaceholderText("按内容关键字过滤…")
+        self._data_search.textChanged.connect(self._apply_data_filter)
+        filt.addWidget(self._data_search, 1)
+        btn_clear = QPushButton("清空记录")
+        btn_clear.setObjectName("ghostBtn")
+        btn_clear.clicked.connect(self._clear_records)
+        filt.addWidget(btn_clear)
+        body.addLayout(filt)
+
         self._data_table = QTableWidget(0, 4)
         self._data_table.setHorizontalHeaderLabels(["时间", "类型", "内容", "描述"])
         self._data_table.horizontalHeader().setStretchLastSection(True)
@@ -1115,8 +1325,35 @@ class Dashboard(QWidget):
         self._data_table.setAlternatingRowColors(True)
         body.addWidget(self._data_table, 1)
         grid.addWidget(box, 0, 0)
-        self._refresh_data_stats()
+        self._apply_data_filter()
         return page
+
+    def _clear_records(self):
+        self._cmd_rows.clear()
+        self._tele_rows.clear()
+        self._apply_data_filter()
+        self._flash("已清空指令/遥测记录", "info")
+
+    def _apply_data_filter(self):
+        if not hasattr(self, "_data_table"):
+            return
+        ftype = self._data_type.currentText()
+        search = self._data_search.text().strip().lower()
+        rows = []
+        for (ts, line, desc) in self._cmd_rows:
+            if ftype in ("全部", "指令") and (not search or search in (line + " " + desc).lower()):
+                rows.append((ts, "指令", line, desc))
+        for row in self._tele_rows:
+            content = ",".join(map(str, row[1:]))
+            if ftype in ("全部", "遥测") and (not search or search in content.lower()):
+                rows.append((row[0], "遥测", content, "模拟遥测"))
+        rows = rows[::-1][:300]
+        self._data_table.setRowCount(0)
+        for i, (ts, kind, content, desc) in enumerate(rows):
+            self._data_table.insertRow(i)
+            for c, v in enumerate([ts, kind, content, desc]):
+                self._data_table.setItem(i, c, QTableWidgetItem(str(v)))
+        self._refresh_data_stats()
 
     def _set_recording(self, on):
         self._recording = on
@@ -1129,13 +1366,7 @@ class Dashboard(QWidget):
         self._flash("动态演示数值：%s" % ("动态演示" if on else "归零中性"), "info")
 
     def _append_data_row(self, kind, content, desc):
-        self._data_table.insertRow(0)
-        stamp = datetime.now().strftime("%H:%M:%S")
-        for c, v in enumerate([stamp, kind, content, desc]):
-            self._data_table.setItem(0, c, QTableWidgetItem(str(v)))
-        if self._data_table.rowCount() > 300:
-            self._data_table.removeRow(self._data_table.rowCount() - 1)
-        self._refresh_data_stats()
+        self._apply_data_filter()
 
     def _refresh_data_stats(self):
         if hasattr(self, "_stat_rec"):
@@ -1861,6 +2092,9 @@ class Dashboard(QWidget):
                                     round(v["water_temp"], 1), round(v["voltage"], 1)))
             if len(self._tele_rows) > 5000:
                 self._tele_rows.pop(0)
+        # 数据管理页周期性刷新表（纳入新遥测）
+        if self._tick % 5 == 0 and hasattr(self, "_apply_data_filter"):
+            self._apply_data_filter()
         self._refresh_data_stats()
         self._update_sonar()
         self._update_auto_data()
