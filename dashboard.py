@@ -645,8 +645,8 @@ class Dashboard(QWidget):
         """QGC 式首页：顶部紧凑状态条 + 左侧视频主画面(撑满) + 右侧/底部紧凑卡片(贴内容)"""
         page = QWidget()
         outer = QVBoxLayout(page)
-        outer.setContentsMargins(10, 6, 10, 6)
-        outer.setSpacing(8)
+        outer.setContentsMargins(8, 4, 8, 4)
+        outer.setSpacing(4)
         outer.addWidget(self._toolbar())
 
         self._video_box, self._video_body = _panel("实时画面 · CAM 01", CYAN)
@@ -658,10 +658,10 @@ class Dashboard(QWidget):
 
         # 主区：左视频(主画面, 撑满) + 右紧凑卡片列(贴内容, 顶部对齐)
         main = QHBoxLayout()
-        main.setSpacing(8)
+        main.setSpacing(6)
         main.addWidget(self._video_box, 5)
         right = QVBoxLayout()
-        right.setSpacing(8)
+        right.setSpacing(6)
         for b in (self._equip_box, self._motion_box):
             b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)   # 高度贴内容, 不再撑满
         right.addWidget(self._equip_box)
@@ -672,7 +672,7 @@ class Dashboard(QWidget):
 
         # 底部紧凑横带：任务信息 / 传感器数据 / 推进器输出与告警
         bottom = QHBoxLayout()
-        bottom.setSpacing(8)
+        bottom.setSpacing(6)
         for b in (self._task_box, self._sensor_box, self._alarm_box):
             b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self._task_box.setMinimumHeight(150)
@@ -1972,6 +1972,22 @@ class Dashboard(QWidget):
         ctrl.addWidget(self._btn_e)
         body.addLayout(ctrl)
 
+        # 推进器级数 & 电机组合（运动映射）
+        cfg = QHBoxLayout()
+        cfg.setSpacing(10)
+        cfg.addWidget(QLabel("推进器级数"))
+        self._thr_level = QComboBox()
+        self._thr_level.addItems(["低速", "中速", "高速"])
+        self._thr_level.setCurrentIndex(2)   # 默认高速
+        cfg.addWidget(self._thr_level)
+        cfg.addWidget(QLabel("电机组合"))
+        self._motor_combo = QComboBox()
+        self._motor_combo.addItems(["双推正转", "差速转向", "镜像转向"])
+        self._motor_combo.setCurrentIndex(0)
+        cfg.addWidget(self._motor_combo)
+        cfg.addStretch(1)
+        body.addLayout(cfg)
+
         # 灯光 & 刷子 & 转速 快捷
         q = QHBoxLayout()
         q.addWidget(QLabel("灯光"))
@@ -2318,17 +2334,31 @@ class Dashboard(QWidget):
             self._flash("未连接主控", "warn")
             return
         self._ensure_running()
-        spd = 150
-        mirror = getattr(self, "_thruster_layout", "normal") == "mirror"
+        # 推进器级数 -> 速度
+        level_f = {0: 0.6, 1: 0.85, 2: 1.0}.get(self._thr_level.currentIndex(), 1.0)
+        spd = int(150 * level_f)
+        combo = self._motor_combo.currentIndex()   # 0双推正转 1差速转向 2镜像转向
+        # 电机组合 决定直行/转弯 两路方向与转速
         if action == "forward":
-            d1, d2 = (-1, 1) if mirror else (1, 1)
+            d1, d2, spd1, spd2 = 1, 1, spd, spd
         elif action == "backward":
-            d1, d2 = (1, -1) if mirror else (-1, -1)
+            d1, d2, spd1, spd2 = -1, -1, spd, spd
         elif action == "left":
-            d1, d2 = (-1, -1) if mirror else (-1, 1)
+            if combo == 1:      # 差速转向：左慢右快（双正转）
+                d1, d2, spd1, spd2 = 1, 1, int(spd * 0.5), spd
+            else:               # 双推/镜像：左侧反转
+                d1, d2, spd1, spd2 = -1, 1, spd, spd
+        elif action == "right":
+            if combo == 1:      # 差速转向：左快右慢（双正转）
+                d1, d2, spd1, spd2 = 1, 1, spd, int(spd * 0.5)
+            else:
+                d1, d2, spd1, spd2 = 1, -1, spd, spd
         else:
-            d1, d2 = (1, 1) if mirror else (1, -1)
-        self._plan.update(dir1=d1, spd1=spd, dir2=d2, spd2=spd)
+            d1, d2, spd1, spd2 = 1, 1, spd, spd
+        mirror = getattr(self, "_thruster_layout", "normal") == "mirror"
+        if mirror:
+            d1, d2 = -d1, -d2
+        self._plan.update(dir1=d1, spd1=spd1, dir2=d2, spd2=spd2)
         self._send_plan()
 
     def start_run(self):
