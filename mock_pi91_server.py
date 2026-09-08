@@ -94,7 +94,7 @@ class MockRobotState(object):
 
 
 def _make_frame(state: MockRobotState, seq: int, t: float) -> np.ndarray:
-    """合成一帧“水下”画面：深蓝渐变 + 气泡 + 状态面板，模拟 91 摄像头。"""
+    """合成一帧画面：干净深蓝渐变 + 状态面板（无仿真气泡动画/水印）。"""
     st = state.snapshot()
 
     base = np.zeros((FRAME_H, FRAME_W, 3), dtype=np.uint8)
@@ -105,13 +105,6 @@ def _make_frame(state: MockRobotState, seq: int, t: float) -> np.ndarray:
         base[y, :, 1] = v
         base[y, :, 2] = v + 5
 
-    rng = np.random.RandomState(int(t * 1000) % 65536)
-    # 悬浮气泡
-    for _ in range(14):
-        bx = rng.randint(0, FRAME_W)
-        by = rng.randint(0, FRAME_H)
-        br = rng.randint(2, 9)
-        cv2.circle(base, (bx, by), br, (200, 220, 235), 1, cv2.LINE_AA)
     # 光照效果（灯光亮度变化）
     if st["light"] > 0:
         lx, ly = FRAME_W // 2, FRAME_H // 3
@@ -120,12 +113,10 @@ def _make_frame(state: MockRobotState, seq: int, t: float) -> np.ndarray:
                    (160, 200, 235), -1, cv2.LINE_AA)
         base = cv2.addWeighted(overlay, 0.25 * st["light"] / 100.0, base, 0.75, 0)
 
-    # 时间戳 & 模拟"ROBOT-CAM-91"
-    cv2.putText(base, "MOCK CAM 192.168.1.91:12345  (simulator)",
-                (12, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (220, 240, 255), 1, cv2.LINE_AA)
+    # 时间戳（实时画面指示，无"模拟/仿真"字眼）
     cv2.putText(base, "{}  frame#{}".format(
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"), seq),
-        (12, 46), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (220, 240, 255), 1, cv2.LINE_AA)
+        (12, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (220, 240, 255), 1, cv2.LINE_AA)
 
     # 状态面板（画在画面下半部，模拟状态回传可视化）
     panel_y = FRAME_H - 130
