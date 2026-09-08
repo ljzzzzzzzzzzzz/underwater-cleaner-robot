@@ -1250,32 +1250,37 @@ class Dashboard(QWidget):
         body.addLayout(brow)
         grid.addWidget(box, 0, 0, Qt.AlignTop)
 
-        # 视频与数据设置
-        vbox, vbody = _panel("视频与数据（CAM1 主 / CAM2）", GREEN)
-        v1 = QHBoxLayout()
-        v1.setSpacing(10)
-        v1.addWidget(QLabel("CAM1端口"))
-        self._set_cam1 = QSpinBox()
-        self._set_cam1.setRange(10000, 65535)
-        self._set_cam1.setValue(int(self.config.robot_port) or 12345)
-        v1.addWidget(self._set_cam1)
-        v1.addWidget(QLabel("CAM2端口"))
-        self._set_cam2 = QSpinBox()
-        self._set_cam2.setRange(10000, 65535)
-        self._set_cam2.setValue(CAM2_PORT)
-        v1.addWidget(self._set_cam2)
-        v1.addWidget(QLabel("帧率"))
-        self._set_fps = QSpinBox()
-        self._set_fps.setRange(5, 30)
-        self._set_fps.setValue(15)
-        v1.addWidget(self._set_fps)
-        v1.addWidget(QLabel("画质"))
-        self._set_quality = QSpinBox()
-        self._set_quality.setRange(20, 95)
-        self._set_quality.setValue(70)
-        v1.addWidget(self._set_quality)
-        v1.addStretch(1)
-        vbody.addLayout(v1)
+        # 视频与数据设置（每路独立的 端口/帧率/画质）
+        vbox, vbody = _panel("视频与数据（CAM1 / CAM2 画面设置）", GREEN)
+        for tag, port_attr, fps_attr, quality_attr, defport, col in (
+                ("CAM1 主画面", "_set_cam1", "_set_fps1", "_set_q1",
+                 int(self.config.robot_port) or 12345, GREEN),
+                ("CAM2 副画面", "_set_cam2", "_set_fps2", "_set_q2", CAM2_PORT, CYAN)):
+            row = QHBoxLayout()
+            row.setSpacing(10)
+            lab = QLabel(tag)
+            lab.setStyleSheet("color:%s; font-size:13px; font-weight:800;" % col)
+            row.addWidget(lab)
+            row.addWidget(QLabel("端口"))
+            spin_p = QSpinBox()
+            spin_p.setRange(10000, 65535)
+            spin_p.setValue(defport)
+            setattr(self, port_attr, spin_p)
+            row.addWidget(spin_p)
+            row.addWidget(QLabel("帧率"))
+            spin_f = QSpinBox()
+            spin_f.setRange(5, 30)
+            spin_f.setValue(15)
+            setattr(self, fps_attr, spin_f)
+            row.addWidget(spin_f)
+            row.addWidget(QLabel("画质"))
+            spin_q = QSpinBox()
+            spin_q.setRange(20, 95)
+            spin_q.setValue(70)
+            setattr(self, quality_attr, spin_q)
+            row.addWidget(spin_q)
+            row.addStretch(1)
+            vbody.addLayout(row)
         v2 = QHBoxLayout()
         v2.addWidget(QLabel("记录目录"))
         self._set_datadir = QLineEdit("data/")
@@ -1309,8 +1314,10 @@ class Dashboard(QWidget):
         self.config.set("system", "auto_reconnect", self._set_recon.isChecked())
         self.config.set("robot91", "thruster_layout", self._set_layout.currentData())
         self.config.set("system", "cam2_port", self._set_cam2.value())
-        self.config.set("system", "video_fps", self._set_fps.value())
-        self.config.set("system", "video_quality", self._set_quality.value())
+        self.config.set("system", "video_fps1", self._set_fps1.value())
+        self.config.set("system", "video_quality1", self._set_q1.value())
+        self.config.set("system", "video_fps2", self._set_fps2.value())
+        self.config.set("system", "video_quality2", self._set_q2.value())
         layout = self._set_layout.currentData()
         self._thruster_layout = layout
         # 同步左侧连接卡地址
@@ -1326,8 +1333,10 @@ class Dashboard(QWidget):
         self.config.set("system", "auto_reconnect", True)
         self.config.set("robot91", "thruster_layout", "normal")
         self.config.set("system", "cam2_port", CAM2_PORT)
-        self.config.set("system", "video_fps", 15)
-        self.config.set("system", "video_quality", 70)
+        self.config.set("system", "video_fps1", 15)
+        self.config.set("system", "video_quality1", 70)
+        self.config.set("system", "video_fps2", 15)
+        self.config.set("system", "video_quality2", 70)
         self._set_ip.setText("192.168.1.91")
         self._set_port.setText("12345")
         self._set_recon.setChecked(True)
@@ -1336,8 +1345,10 @@ class Dashboard(QWidget):
         self._set_layout.setCurrentIndex(self._set_layout.findData("normal"))
         self._set_cam1.setValue(12345)
         self._set_cam2.setValue(CAM2_PORT)
-        self._set_fps.setValue(15)
-        self._set_quality.setValue(70)
+        self._set_fps1.setValue(15)
+        self._set_q1.setValue(70)
+        self._set_fps2.setValue(15)
+        self._set_q2.setValue(70)
         self._thruster_layout = "normal"
         self._ip.setText("192.168.1.91")
         self._port.setText("12345")
@@ -1622,16 +1633,17 @@ class Dashboard(QWidget):
 
     def _build_equipment(self):
         body = self._equip_body
-        # ROV 模型视口（深海军蓝渐变 + 细描边 + 顶部高光，读作“带边框的小屏幕”，非纯黑）
+        # ROV 模型视口（左图右文：图放大在左，信息竖排在右）
         photo = QLabel()
         photo.setObjectName("rovPhoto")
         photo.setAlignment(Qt.AlignCenter)
-        photo.setFixedHeight(172)
+        photo.setFixedHeight(255)
+        photo.setFixedWidth(280)
         path = os.path.join(ASSET_DIR, "rov_photo.png")
         if os.path.exists(path):
             pm = QPixmap(path)
             if not pm.isNull():
-                photo.setPixmap(pm.scaledToHeight(140, Qt.SmoothTransformation))
+                photo.setPixmap(pm.scaledToHeight(215, Qt.SmoothTransformation))
         else:
             photo.setText("ROV 示意图（待放置俯视图）")
         photo.setStyleSheet(
@@ -1639,7 +1651,13 @@ class Dashboard(QWidget):
             "stop:0 #0e2138,stop:1 #0a1526);"
             "border:1px solid #2a4a7a;border-top:1px solid rgba(120,160,210,80);"
             "border-radius:10px;")
-        body.addWidget(photo)
+        hrow = QHBoxLayout()
+        hrow.setSpacing(12)
+        hrow.addWidget(photo, 0, Qt.AlignVCenter)
+        col = QVBoxLayout()
+        col.setSpacing(6)
+        hrow.addLayout(col, 1)
+        body.addLayout(hrow)
 
         # 2 通道推进器状态指示（软著：左/右）—— 健康圆点 + 实时输出% （分组条）
         thr = QHBoxLayout()
@@ -1672,7 +1690,7 @@ class Dashboard(QWidget):
         gl.addStretch(1)
         thr.addWidget(grp)
         thr.addStretch(1)
-        body.addLayout(thr)
+        col.addLayout(thr)
 
         rows = [
             ("连接状态", "已连接", GREEN), ("工作模式", "手动模式", BLUE),
@@ -1682,9 +1700,9 @@ class Dashboard(QWidget):
         self._status_rows = []
         for label, value, color in rows:
             rr, val = _kv(label, value, color)
-            body.addLayout(rr)
+            col.addLayout(rr)
             self._status_rows.append((label, val))
-        body.addStretch(1)
+        col.addStretch(1)
 
     def _build_motion(self):
         body = self._motion_body
