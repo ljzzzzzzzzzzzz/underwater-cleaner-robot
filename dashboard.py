@@ -354,7 +354,7 @@ class Dashboard(QWidget):
         self._shot_dir = "data"
         self._plan = {"mode": proto.MODE_STOP, "angle": 90,
                       "dir1": 0, "spd1": 0, "dir2": 0, "spd2": 0,
-                      "brush": "000", "brush_speed": 60, "light": 0}
+                      "brush": "00000", "brush_speed": 60, "light": 0}
         self._cmd_count = 0
         self._boot = time.time()
         self._fps = 0.0
@@ -1771,7 +1771,7 @@ class Dashboard(QWidget):
         depth_lbl.setAlignment(Qt.AlignLeft)
         self._depth_gauge = DepthGauge()
         depth_col.addWidget(depth_lbl)
-        depth_col.addWidget(self._depth_gauge, 1)
+        depth_col.addWidget(self._depth_gauge, 5)
         depth_col.addStretch(1)
         vrow.addLayout(depth_col)
         body.addLayout(vrow, 1)
@@ -2010,10 +2010,12 @@ class Dashboard(QWidget):
         brow = QHBoxLayout()
         brow.setSpacing(8)
         brow.addWidget(QLabel("刷子"))
-        self._b1 = QCheckBox("刷1")
-        self._b2 = QCheckBox("刷2")
-        self._b3 = QCheckBox("刷3")
-        for b in (self._b1, self._b2, self._b3):
+        self._b1 = QCheckBox("小刷1")
+        self._b2 = QCheckBox("小刷2")
+        self._b3 = QCheckBox("小刷3")
+        self._b4 = QCheckBox("小刷4")
+        self._blarge = QCheckBox("大刷")
+        for b in (self._b1, self._b2, self._b3, self._b4, self._blarge):
             b.setStyleSheet("color:%s;" % TXT)
             b.toggled.connect(self._on_brush)
             brow.addWidget(b)
@@ -2065,9 +2067,9 @@ class Dashboard(QWidget):
         # 推进器输出（软著 2 通道：左/右）—— 实时 PWM 柱状图
         bars = QHBoxLayout()
         bars.setSpacing(16)
-        for tag, name, color, bar_attr, pwm_attr in (
-                ("T1", "左", GREEN, "_bar_l", "_pwm_l"),
-                ("T2", "右", CYAN, "_bar_r", "_pwm_r")):
+        for tag, name, color, bar_attr, pwm_attr, dir_attr in (
+                ("T1", "左", GREEN, "_bar_l", "_pwm_l", "_dir_l"),
+                ("T2", "右", CYAN, "_bar_r", "_pwm_r", "_dir_r")):
             lay = QVBoxLayout()
             lay.setSpacing(4)
             hrow = QHBoxLayout()
@@ -2078,6 +2080,10 @@ class Dashboard(QWidget):
             nm.setStyleSheet("color:%s; font-size:11px;" % TXT_SUB)
             hrow.addWidget(hd)
             hrow.addWidget(nm)
+            dirl = QLabel("停止")
+            dirl.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT_SUB)
+            hrow.addWidget(dirl)
+            setattr(self, dir_attr, dirl)
             hrow.addStretch(1)
             pwmL = QLabel("PWM")
             pwmL.setStyleSheet("color:%s; font-size:10px;" % TXT_SUB)
@@ -2170,7 +2176,7 @@ class Dashboard(QWidget):
         self._receiver = recv
         # 回安全状态（并同步快捷控件显示）
         self._plan.update(mode=proto.MODE_STOP, dir1=0, spd1=0, dir2=0, spd2=0,
-                          brush="000", brush_speed=0, light=0)
+                          brush="00000", brush_speed=0, light=0)
         self._sync_quick_ui()
         self._send_plan(announce=False)
         self.connect_cam2(quiet=True)   # 主控连上后顺带尝试 CAM2 视频通道
@@ -2382,14 +2388,14 @@ class Dashboard(QWidget):
 
     def stop_idle(self):
         self._plan.update(mode=proto.MODE_STOP, dir1=0, spd1=0, dir2=0, spd2=0,
-                          brush="000", brush_speed=0, light=0)
+                          brush="00000", brush_speed=0, light=0)
         self._sync_quick_ui()
         self._flash("停止待机(00)：全部复位", "ok")
         self._send_plan()
 
     def emergency(self):
         self._plan.update(mode=proto.MODE_STOP, dir1=0, spd1=0, dir2=0, spd2=0,
-                          brush="000", brush_speed=0, light=0)
+                          brush="00000", brush_speed=0, light=0)
         line = proto.emergency_stop_command()
         self._flash("！！！ 急停（%s）" % line, "err")
         self._raw_send(line)
@@ -2422,7 +2428,8 @@ class Dashboard(QWidget):
 
     def _on_brush(self, _=None):
         self._plan["brush"] = "".join(
-            "1" if b.isChecked() else "0" for b in (self._b1, self._b2, self._b3))
+            "1" if b.isChecked() else "0"
+            for b in (self._b1, self._b2, self._b3, self._b4, self._blarge))
         self._send_plan(announce=False)
 
     def _sync_quick_ui(self):
@@ -2434,9 +2441,9 @@ class Dashboard(QWidget):
             self._light3.setChecked(False)
         self._light.setValue(p["light"])
         self._bs.setValue(int(p["brush_speed"]))
-        self._b1.setChecked(p["brush"][0] == "1")
-        self._b2.setChecked(p["brush"][1] == "1")
-        self._b3.setChecked(p["brush"][2] == "1")
+        # 刷子 5 位：小刷1~4 + 大刷
+        for i, b in enumerate((self._b1, self._b2, self._b3, self._b4, self._blarge)):
+            b.setChecked(p["brush"][i] == "1")
 
     def _sync_bars(self):
         p = self._plan
@@ -2448,6 +2455,14 @@ class Dashboard(QWidget):
             self._pwm_l.setText(str(int(mag1)))
         if hasattr(self, "_pwm_r"):
             self._pwm_r.setText(str(int(mag2)))
+        # 方向：正转/反转/停止
+        for dattr, d in (("_dir_l", p["dir1"]), ("_dir_r", p["dir2"])):
+            lab = getattr(self, dattr, None)
+            if lab is not None:
+                txt = "正转" if d > 0 else ("反转" if d < 0 else "停止")
+                col = GREEN if d > 0 else (RED if d < 0 else TXT_SUB)
+                lab.setText(txt)
+                lab.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % col)
         if getattr(self, "_thr_ind", None):
             for (dot, val), m in zip(self._thr_ind, (mag1, mag2)):
                 val.setText("%d%%" % int(100 * m / 255.0))

@@ -15,7 +15,7 @@ robot_protocol.py —— 智能水下清洁机器人控制系统 · 指令协议
     ANGLE       0 ~ 180          （舵机）
     dir1,dir2   -1 / 0 / 1        （推进器方向：-1反转 0停止 1正转）
     s1,s2       0 ~ 255           （推进器 PWM）
-    BRUSH_STATE 3 位 01 字符串      （三路清洗刷继电器）
+    BRUSH_STATE 5 位 01 字符串      （5 路清洗刷：小刷×4 + 大刷×1，自左到右对应）
     BRUSH_SPEED 0 ~ 100           （刷子转速百分比）
     LIGHT       0 ~ 100           （灯光亮度百分比）
 """
@@ -42,7 +42,7 @@ _COMMAND_RE = re.compile(
     r"(?P<angle>-?\d+)\s+"
     r"(?P<dir1>-?\d)\s*,\s*(?P<dir2>-?\d)\s+"
     r"(?P<spd1>-?\d+)\s*,\s*(?P<spd2>-?\d+)\s+"
-    r"(?P<brush>[01]{3})\s+"
+    r"(?P<brush>[01]{5})\s+"
     r"(?P<brush_speed>-?\d+(?:\.\d+)?)\s+"
     r"(?P<light>-?\d+)\s*$"
 )
@@ -81,14 +81,14 @@ def build_command(
     dir2 = clamp_dir(dir2)
     spd1 = clamp(spd1, SPEED_MIN, SPEED_MAX)
     spd2 = clamp(spd2, SPEED_MIN, SPEED_MAX)
-    # 刷子状态：三位 0/1，非法字符一律按 0
+    # 刷子状态：五位 0/1（小刷×4 + 大刷×1），非法字符一律按 0
     bs_digits = []
     for ch in str(brush_state):
-        if ch in "01" and len(bs_digits) < 3:
+        if ch in "01" and len(bs_digits) < 5:
             bs_digits.append(ch)
-        elif len(bs_digits) < 3:
+        elif len(bs_digits) < 5:
             bs_digits.append("0")
-    brush_state = "".join(bs_digits).ljust(3, "0")
+    brush_state = "".join(bs_digits).ljust(5, "0")
     brush_speed = max(PERCENT_MIN, min(PERCENT_MAX, float(brush_speed)))
     light = clamp(light, PERCENT_MIN, PERCENT_MAX)
 
