@@ -1733,15 +1733,38 @@ class Dashboard(QWidget):
         body.addWidget(osd_frame)
 
         vrow = QHBoxLayout()
+        vrow.setSpacing(10)
+
+        # CAM1 视频（左）
+        cam1_col = QVBoxLayout()
+        cam1_col.setSpacing(3)
+        cap1 = QLabel("● CAM 01")
+        cap1.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % GREEN)
+        cam1_col.addWidget(cap1)
         self._video_label = QLabel("CAM 01 未连接（连接主控后显示）")
         self._video_label.setObjectName("video")
         self._video_label.setAlignment(Qt.AlignCenter)
-        self._video_label.setMinimumSize(560, 300)
+        self._video_label.setMinimumSize(320, 220)
         self._video_label.setScaledContents(False)
-        self._video_label.setMinimumHeight(300)
-        vrow.addWidget(self._video_label, 1)
+        cam1_col.addWidget(self._video_label, 1)
+        vrow.addLayout(cam1_col, 1)
 
-        # 深度指示：自绘仪表（刻度+填充+数值严格对齐）
+        # CAM2 视频（右，与 CAM1 等大，可隐藏）
+        self._cam2_widget = QWidget()
+        c2lay = QVBoxLayout(self._cam2_widget)
+        c2lay.setContentsMargins(0, 0, 0, 0)
+        c2lay.setSpacing(3)
+        cap2 = QLabel("● CAM 02")
+        cap2.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % CYAN)
+        c2lay.addWidget(cap2)
+        self._video_label2 = QLabel("CAM 02 待接入（端口 12346）")
+        self._video_label2.setObjectName("video")
+        self._video_label2.setAlignment(Qt.AlignCenter)
+        self._video_label2.setMinimumSize(320, 220)
+        c2lay.addWidget(self._video_label2, 1)
+        vrow.addWidget(self._cam2_widget, 1)
+
+        # 深度指示（右侧窄列）
         depth_col = QVBoxLayout()
         depth_lbl = QLabel("深度指示 (m)")
         depth_lbl.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT_SUB)
@@ -1753,31 +1776,12 @@ class Dashboard(QWidget):
         vrow.addLayout(depth_col)
         body.addLayout(vrow, 1)
 
-        # CAM2 小窗（首页第二路，可隐藏）
-        self._cam2_widget = QWidget()
-        c2lay = QVBoxLayout(self._cam2_widget)
-        c2lay.setContentsMargins(0, 0, 0, 0)
-        c2lay.setSpacing(3)
-        c2h = QHBoxLayout()
-        cap2 = QLabel("● CAM 02")
-        cap2.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % CYAN)
+        # 底栏（视频控制）
+        bar = QHBoxLayout()
         self._hide_cam2_btn = QCheckBox("隐藏 CAM2")
         self._hide_cam2_btn.setChecked(False)
         self._hide_cam2_btn.toggled.connect(self._toggle_cam2_hidden)
-        c2h.addWidget(cap2)
-        c2h.addStretch(1)
-        c2h.addWidget(self._hide_cam2_btn)
-        c2lay.addLayout(c2h)
-        self._video_label2 = QLabel("CAM 02 待接入（端口 12346）")
-        self._video_label2.setObjectName("video")
-        self._video_label2.setAlignment(Qt.AlignCenter)
-        self._video_label2.setMinimumSize(360, 190)
-        self._video_label2.setMaximumHeight(240)
-        c2lay.addWidget(self._video_label2, 1)
-        body.addWidget(self._cam2_widget)
-
-        # 底栏（视频控制）
-        bar = QHBoxLayout()
+        bar.addWidget(self._hide_cam2_btn)
         bar.addStretch(1)
         self._btn_video = QPushButton("打开视频")
         self._btn_photo = QPushButton("📷 截图")
