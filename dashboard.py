@@ -126,7 +126,7 @@ class DepthGauge(QWidget):
         super(DepthGauge, self).__init__(parent)
         self._depth = 0.0
         self.setMinimumHeight(260)
-        self.setFixedWidth(92)
+        self.setFixedWidth(118)
         self.setStyleSheet("background:transparent;")
 
     def set_depth(self, d):
@@ -138,10 +138,10 @@ class DepthGauge(QWidget):
         p.setRenderHint(QPainter.Antialiasing)
         w = self.width()
         h = self.height()
-        # 轨道区（右侧 40px）
-        bar_x = w - 40
+        # 轨道区
+        bar_x = 44
         bar_w = 22
-        top, bottom = 8, h - 20
+        top, bottom = 8, h - 8
         # 轨道
         p.setPen(Qt.NoPen)
         p.setBrush(QColor("#0a1428"))
@@ -159,9 +159,9 @@ class DepthGauge(QWidget):
             p.setBrush(grad)
             p.setPen(Qt.NoPen)
             p.drawRoundedRect(QRectF(bar_x, bottom - fill_h, bar_w, fill_h), 5, 5)
-        # 刻度线 + 数值标签（0/10/20/30/40/50）
+        # 刻度线 + 数值标签（密集刻度 0/5/10/.../50）
         p.setPen(QColor("#5b7a99"))
-        for m in (0, 10, 20, 30, 40, 50):
+        for m in range(0, 51, 5):
             yy = bottom - (bottom - top) * (m / 50.0)
             p.drawLine(bar_x - 8, int(yy), bar_x - 2, int(yy))
             p.drawText(QRectF(0, yy - 7, 20, 14), Qt.AlignRight | Qt.AlignVCenter, str(m))
@@ -171,7 +171,7 @@ class DepthGauge(QWidget):
         p.drawLine(bar_x - 10, int(marker_y), bar_x + bar_w + 2, int(marker_y))
         p.setPen(QColor("#dcefff"))
         p.setFont(QFont("Consolas", 12, QFont.Bold))
-        p.drawText(QRectF(bar_x + bar_w + 8, marker_y - 9, 34, 18),
+        p.drawText(QRectF(bar_x + bar_w + 8, marker_y - 9, 40, 18),
                    Qt.AlignLeft | Qt.AlignVCenter, "%.1f" % self._depth)
         p.end()
 
