@@ -638,13 +638,6 @@ class Dashboard(QWidget):
         self._alarm_ind = QLabel("⚠ 正常")
         self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % GREEN)
         lay.addWidget(self._alarm_ind)
-        lay.addWidget(vsep())
-        if getattr(self, "_lively", False):
-            tm = QLabel("演示模式")
-        else:
-            tm = QLabel("展会演示模式")
-        tm.setStyleSheet("color:%s;font-size:11px;" % TXT_SUB)
-        lay.addWidget(tm)
         return bar
 
     def _overview_page(self):
@@ -1259,7 +1252,7 @@ class Dashboard(QWidget):
             "hum": self._curve_plot.plot(pen=pg.mkPen(RED, width=2), name="湿度"),
         }
         body.addWidget(self._curve_plot, 1)
-        legend = QLabel("电压(绿) · 电量(青) · 舱温(黄) · 湿度(红) —— 随“动态演示数值”变化")
+        legend = QLabel("电压(绿) · 电量(青) · 舱温(黄) · 湿度(红) —— 实时趋势")
         legend.setStyleSheet("color:%s;font-size:13px;" % TXT_SUB)
         body.addWidget(legend)
         lay.addWidget(box, 1)
@@ -1287,20 +1280,20 @@ class Dashboard(QWidget):
         lay = QVBoxLayout(page)
         lay.setContentsMargins(10, 6, 10, 6)
         lay.setSpacing(10)
-        box, body = _panel("系统自检 · 协议 / 模拟回路", CYAN)
+        box, body = _panel("系统自检 · 协议 / 回路", CYAN)
         top = QHBoxLayout()
         self._btn_selfcheck = QPushButton("▶ 开始自检")
         self._btn_selfcheck.setObjectName("solidBtn")
         self._btn_selfcheck.clicked.connect(self._run_selfcheck)
         top.addWidget(self._btn_selfcheck)
         top.addStretch(1)
-        hint = QLabel("检查：指令构造/解析/限幅 + 模拟91节点 收发帧与指令回路")
+        hint = QLabel("检查：指令构造/解析/限幅 + 91节点 收发帧与指令回路")
         hint.setStyleSheet("color:%s;font-size:13px;" % TXT_SUB)
         top.addWidget(hint)
         body.addLayout(top)
         self._selfcheck_out = QTextBrowser()
         self._selfcheck_out.setObjectName("alarm")
-        self._selfcheck_out.setPlainText("点击“开始自检”执行本地协议与模拟回路自检。")
+        self._selfcheck_out.setPlainText("点击“开始自检”执行本地协议与回路自检。")
         body.addWidget(self._selfcheck_out, 1)
         lay.addWidget(box, 1)
         return page
@@ -1378,11 +1371,6 @@ class Dashboard(QWidget):
         r3.addWidget(self._set_layout)
         body.addLayout(r3)
 
-        self._chk_lively = QCheckBox("动态演示数值（默认归零）")
-        self._chk_lively.setChecked(self._lively)
-        self._chk_lively.toggled.connect(self._on_lively)
-        body.addWidget(self._chk_lively)
-
         btn_save = QPushButton("保存设置")
         btn_reset = QPushButton("恢复默认")
         btn_exp = QPushButton("导出配置")
@@ -1444,7 +1432,7 @@ class Dashboard(QWidget):
         for line in ("软件：智能水下清洁机器人控制系统 V1.0",
                      "协议：TCP/IP ASCII 7字段（软著）",
                      "主端口：192.168.1.91:12345 · 灯光从控(由主控转发)",
-                     "数据：真实=连接/视频/指令；遥测=模拟(待接入)"):
+                     "数据：真实=连接/视频/指令；遥测=待接入"):
             about_body.addWidget(QLabel(line))
         about_body.addStretch(1)
         grid.addWidget(about, 1, 0, 1, 2, Qt.AlignTop)
@@ -1607,7 +1595,7 @@ class Dashboard(QWidget):
         for row in self._tele_rows:
             content = ",".join(map(str, row[1:]))
             if ftype in ("全部", "遥测") and (not search or search in content.lower()):
-                rows.append((row[0], "遥测", content, "模拟遥测"))
+                rows.append((row[0], "遥测", content, "遥测记录"))
         rows = rows[::-1][:300]
         self._data_table.setRowCount(0)
         for i, (ts, kind, content, desc) in enumerate(rows):
@@ -1620,11 +1608,6 @@ class Dashboard(QWidget):
         self._recording = on
         self._btn_rec.setText("停止记录" if on else "开始记录")
         self._flash("数据记录 %s" % ("开启" if on else "暂停"), "info")
-
-    def _on_lively(self, on):
-        self._lively = on
-        self._tick_ui()
-        self._flash("动态演示数值：%s" % ("动态演示" if on else "归零中性"), "info")
 
     def _append_data_row(self, kind, content, desc):
         self._apply_data_filter()
@@ -1644,7 +1627,7 @@ class Dashboard(QWidget):
             for row in self._cmd_rows:
                 f.write("%s,cmd,%s,%s\n" % row)
             for row in self._tele_rows:
-                f.write("%s,tele,%s,%s\n" % (row[0], ",".join(map(str, row[1:])), "模拟遥测"))
+                f.write("%s,tele,%s,%s\n" % (row[0], ",".join(map(str, row[1:])), "遥测记录"))
         self._flash("已导出记录：%s" % path, "ok")
 
     # ---------------- 日志信息 ----------------
