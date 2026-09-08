@@ -1251,9 +1251,14 @@ class Dashboard(QWidget):
         grid.addWidget(box, 0, 0, Qt.AlignTop)
 
         # 视频与数据设置
-        vbox, vbody = _panel("视频与数据", GREEN)
+        vbox, vbody = _panel("视频与数据（CAM1 主 / CAM2）", GREEN)
         v1 = QHBoxLayout()
         v1.setSpacing(10)
+        v1.addWidget(QLabel("CAM1端口"))
+        self._set_cam1 = QSpinBox()
+        self._set_cam1.setRange(10000, 65535)
+        self._set_cam1.setValue(int(self.config.robot_port) or 12345)
+        v1.addWidget(self._set_cam1)
         v1.addWidget(QLabel("CAM2端口"))
         self._set_cam2 = QSpinBox()
         self._set_cam2.setRange(10000, 65535)
@@ -1297,8 +1302,8 @@ class Dashboard(QWidget):
 
     def _save_settings(self):
         ip = self._set_ip.text().strip() or "192.168.1.91"
-        port = self._set_port.text().strip() or "12345"
-        self.config.update_robot(ip, port)
+        main_port = int(self._set_cam1.value())
+        self.config.update_robot(ip, main_port)
         self.config.set("system", "reconnect_interval", self._set_recon_int.value())
         self.config.set("system", "max_reconnect_attempts", self._set_recon_max.value())
         self.config.set("system", "auto_reconnect", self._set_recon.isChecked())
@@ -1310,9 +1315,9 @@ class Dashboard(QWidget):
         self._thruster_layout = layout
         # 同步左侧连接卡地址
         self._ip.setText(ip)
-        self._port.setText(port)
-        self._flash("设置已保存：%s:%s | 推进器=%s | CAM2:%d"
-                    % (ip, port, layout, self._set_cam2.value()), "ok")
+        self._port.setText(str(main_port))
+        self._flash("设置已保存：%s:%d | 推进器=%s | CAM1:%d CAM2:%d"
+                    % (ip, main_port, layout, main_port, self._set_cam2.value()), "ok")
 
     def _reset_settings(self):
         self.config.update_robot("192.168.1.91", 12345)
@@ -1329,6 +1334,7 @@ class Dashboard(QWidget):
         self._set_recon_int.setValue(3)
         self._set_recon_max.setValue(10)
         self._set_layout.setCurrentIndex(self._set_layout.findData("normal"))
+        self._set_cam1.setValue(12345)
         self._set_cam2.setValue(CAM2_PORT)
         self._set_fps.setValue(15)
         self._set_quality.setValue(70)
