@@ -584,7 +584,7 @@ class Dashboard(QWidget):
             "border:1px solid #2A3A60;border-radius:10px;}")
         lay = QHBoxLayout(bar)
         lay.setContentsMargins(12, 6, 12, 6)
-        lay.setSpacing(12)
+        lay.setSpacing(10)
 
         def vsep():
             s = QFrame()
@@ -694,7 +694,7 @@ class Dashboard(QWidget):
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(10, 6, 10, 6)
-        grid.setSpacing(12)
+        grid.setSpacing(10)
         box, body = _panel("实时监控 · 视频与关键数据", CYAN)
         # 双摄像头画面：CAM1 左、CAM2 右，各占一半
         vrow = QHBoxLayout()
@@ -747,7 +747,7 @@ class Dashboard(QWidget):
         page = QWidget()
         lay = QVBoxLayout(page)
         lay.setContentsMargins(10, 6, 10, 6)
-        lay.setSpacing(12)
+        lay.setSpacing(10)
         box, body = _panel("任务规划 · 航点与执行", CYAN)
 
         # 任务配置（模式/深度/速度）
@@ -901,7 +901,7 @@ class Dashboard(QWidget):
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(10, 6, 10, 6)
-        grid.setSpacing(12)
+        grid.setSpacing(10)
         box, body = _panel("自主控制 · 参数与控制", BLUE)
         r = QHBoxLayout()
         r.addWidget(QLabel("控制模式"))
@@ -1012,7 +1012,7 @@ class Dashboard(QWidget):
             else:
                 value = fmt % _ZERO[key]
             lbl = QLabel(label)
-            lbl.setStyleSheet("color:%s; font-size:13px; font-weight:700;" % TXT_SUB)
+            lbl.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT_SUB)
             # 标签前加小图标
             grp = QWidget()
             gh = QHBoxLayout(grp)
@@ -1021,12 +1021,12 @@ class Dashboard(QWidget):
             ico = load_icon(icon)
             if ico is not None:
                 ico_lbl = QLabel()
-                ico_lbl.setPixmap(ico.pixmap(20, 20))
+                ico_lbl.setPixmap(ico.pixmap(26, 26))
                 gh.addWidget(ico_lbl)
             gh.addWidget(lbl)
             gh.addStretch(1)
             val = QLabel(value)
-            val.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % col)
+            val.setStyleSheet("color:%s; font-size:21px; font-weight:800;" % col)
             if fmt is not None:
                 _mono(val)
             row, colc = idx // 2, (idx % 2) * 2
@@ -1079,7 +1079,7 @@ class Dashboard(QWidget):
         page = QWidget()
         outer = QVBoxLayout(page)
         outer.setContentsMargins(10, 6, 10, 6)
-        outer.setSpacing(12)
+        outer.setSpacing(10)
 
         # 探测设置 + 状态
         box, body = _panel("声纳探测 · 参数与状态", CYAN)
@@ -1194,7 +1194,7 @@ class Dashboard(QWidget):
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(10, 6, 10, 6)
-        grid.setSpacing(12)
+        grid.setSpacing(10)
 
         box, body = _panel("系统设置 · 主控连接", CYAN)
         r = QHBoxLayout()
@@ -1249,20 +1249,50 @@ class Dashboard(QWidget):
         brow.addWidget(btn_reset)
         body.addLayout(brow)
         grid.addWidget(box, 0, 0, Qt.AlignTop)
-        about, about_body = _panel("系统信息", CYAN)
+
+        # 视频与数据设置
+        vbox, vbody = _panel("视频与数据", GREEN)
+        v1 = QHBoxLayout()
+        v1.setSpacing(10)
+        v1.addWidget(QLabel("CAM2端口"))
+        self._set_cam2 = QSpinBox()
+        self._set_cam2.setRange(10000, 65535)
+        self._set_cam2.setValue(CAM2_PORT)
+        v1.addWidget(self._set_cam2)
+        v1.addWidget(QLabel("帧率"))
+        self._set_fps = QSpinBox()
+        self._set_fps.setRange(5, 30)
+        self._set_fps.setValue(15)
+        v1.addWidget(self._set_fps)
+        v1.addWidget(QLabel("画质"))
+        self._set_quality = QSpinBox()
+        self._set_quality.setRange(20, 95)
+        self._set_quality.setValue(70)
+        v1.addWidget(self._set_quality)
+        v1.addStretch(1)
+        vbody.addLayout(v1)
+        v2 = QHBoxLayout()
+        v2.addWidget(QLabel("记录目录"))
+        self._set_datadir = QLineEdit("data/")
+        self._set_datadir.setReadOnly(True)
+        v2.addWidget(self._set_datadir, 1)
+        vbody.addLayout(v2)
+        grid.addWidget(vbox, 0, 1, Qt.AlignTop)
+
+        about, about_body = _panel("系统信息", BLUE)
         for line in ("软件：智能水下清洁机器人控制系统 V1.0",
                      "协议：TCP/IP ASCII 7字段（软著）",
                      "主端口：192.168.1.91:12345 · 灯光从控(由主控转发)",
                      "数据：真实=连接/视频/指令；遥测=模拟(待接入)"):
             about_body.addWidget(QLabel(line))
         about_body.addStretch(1)
-        grid.addWidget(about, 0, 1, Qt.AlignTop)
+        grid.addWidget(about, 1, 0, 1, 2, Qt.AlignTop)
         grid.setColumnStretch(0, 3)
         grid.setColumnStretch(1, 2)
-        # 面板贴顶、只占内容高度，下方留白
-        box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-        about.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        for b in (box, vbox, about):
+            b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         grid.setRowStretch(0, 1)
+        grid.setRowStretch(1, 1)
         return page
 
     def _save_settings(self):
@@ -1273,12 +1303,16 @@ class Dashboard(QWidget):
         self.config.set("system", "max_reconnect_attempts", self._set_recon_max.value())
         self.config.set("system", "auto_reconnect", self._set_recon.isChecked())
         self.config.set("robot91", "thruster_layout", self._set_layout.currentData())
+        self.config.set("system", "cam2_port", self._set_cam2.value())
+        self.config.set("system", "video_fps", self._set_fps.value())
+        self.config.set("system", "video_quality", self._set_quality.value())
         layout = self._set_layout.currentData()
         self._thruster_layout = layout
         # 同步左侧连接卡地址
         self._ip.setText(ip)
         self._port.setText(port)
-        self._flash("设置已保存：%s:%s | 推进器=%s" % (ip, port, layout), "ok")
+        self._flash("设置已保存：%s:%s | 推进器=%s | CAM2:%d"
+                    % (ip, port, layout, self._set_cam2.value()), "ok")
 
     def _reset_settings(self):
         self.config.update_robot("192.168.1.91", 12345)
@@ -1286,12 +1320,18 @@ class Dashboard(QWidget):
         self.config.set("system", "max_reconnect_attempts", 10)
         self.config.set("system", "auto_reconnect", True)
         self.config.set("robot91", "thruster_layout", "normal")
+        self.config.set("system", "cam2_port", CAM2_PORT)
+        self.config.set("system", "video_fps", 15)
+        self.config.set("system", "video_quality", 70)
         self._set_ip.setText("192.168.1.91")
         self._set_port.setText("12345")
         self._set_recon.setChecked(True)
         self._set_recon_int.setValue(3)
         self._set_recon_max.setValue(10)
         self._set_layout.setCurrentIndex(self._set_layout.findData("normal"))
+        self._set_cam2.setValue(CAM2_PORT)
+        self._set_fps.setValue(15)
+        self._set_quality.setValue(70)
         self._thruster_layout = "normal"
         self._ip.setText("192.168.1.91")
         self._port.setText("12345")
@@ -1302,7 +1342,7 @@ class Dashboard(QWidget):
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(10, 6, 10, 6)
-        grid.setSpacing(12)
+        grid.setSpacing(10)
         box, body = _panel("数据管理 · 指令/遥测记录", CYAN)
         top = QHBoxLayout()
         self._btn_rec = QPushButton("停止记录" if self._recording else "开始记录")
@@ -1413,7 +1453,7 @@ class Dashboard(QWidget):
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(10, 6, 10, 6)
-        grid.setSpacing(12)
+        grid.setSpacing(10)
         box, body = _panel("日志信息 · 分级筛选", YELLOW)
         top = QHBoxLayout()
         self._f_ok = QCheckBox("正常")
@@ -1931,10 +1971,11 @@ class Dashboard(QWidget):
         if self._recv2 is not None:
             return
         ip = self._ip.text().strip() or proto.DEFAULT_IP
+        port = int(self.config.get("system", "cam2_port") or CAM2_PORT)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1.5)
-            sock.connect((ip, CAM2_PORT))
+            sock.connect((ip, port))
         except Exception:
             return          # CAM2 可选：连不上静默，不打断演示
         self._sock2 = sock
@@ -1944,7 +1985,7 @@ class Dashboard(QWidget):
         recv.start()
         self._recv2 = recv
         if not quiet:
-            self._flash("CAM2 视频通道已连接 %s:%d" % (ip, CAM2_PORT), "ok")
+            self._flash("CAM2 视频通道已连接 %s:%d" % (ip, port), "ok")
 
     def _close_cam2(self):
         recv, self._recv2 = self._recv2, None
