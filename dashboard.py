@@ -246,7 +246,8 @@ def load_icon(name):
     return icon
 
 
-def _kv(label, value="--", color=TXT_SUB, unit="", mono=False, icon=None):
+def _kv(label, value="--", color=TXT_SUB, unit="", mono=False, icon=None,
+        lab_size=15, val_size=17, icon_size=22, lab_bold=False):
     from PySide2.QtGui import QPixmap
     row = QHBoxLayout()
     row.setSpacing(8)
@@ -254,12 +255,13 @@ def _kv(label, value="--", color=TXT_SUB, unit="", mono=False, icon=None):
         ico = load_icon(icon)
         lbl_ico = QLabel()
         if ico is not None:
-            lbl_ico.setPixmap(ico.pixmap(20, 20))
+            lbl_ico.setPixmap(ico.pixmap(icon_size, icon_size))
         row.addWidget(lbl_ico)
+    _fw = "700" if lab_bold else "400"
     lab = QLabel(label)
-    lab.setStyleSheet("color:%s; font-size:15px; letter-spacing:0.5px;" % TXT_SUB)
+    lab.setStyleSheet("color:%s; font-size:%dpx; letter-spacing:0.5px; font-weight:%s;" % (TXT_SUB, lab_size, _fw))
     val = QLabel("%s%s" % (value, unit))
-    val.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % color)
+    val.setStyleSheet("color:%s; font-size:%dpx; font-weight:800;" % (color, val_size))
     if mono:
         _mono(val)
     row.addWidget(lab)
@@ -532,8 +534,10 @@ class Dashboard(QWidget):
         self._nav_items[0].setChecked(True)
         lay.addStretch(1)
 
-        # 系统状态面板
+        # 系统状态面板（梁展翔式：撑满侧栏 + 大字）
         sys_box, sys_body = _panel("系统状态", GREEN)
+        sys_box.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        sys_body.setSpacing(8)
         rows = [
             ("电源电压", "voltage", "%.1f V", TXT, "volt"),
             ("剩余电量", "battery", "%.0f%%", GREEN, "battery"),
@@ -543,20 +547,21 @@ class Dashboard(QWidget):
         ]
         self._sys_rows = []
         for label, key, fmt, col, icon in rows:
-            r, v = _kv(label, fmt % (_ZERO[key]), col, mono=True, icon=icon)
+            r, v = _kv(label, fmt % (_ZERO[key]), col, mono=True, icon=icon,
+                       lab_size=16, val_size=20, icon_size=26)
             sys_body.addLayout(r)
             self._sys_rows.append((v, key, fmt, col))
             if label == "剩余电量":
                 pbar = QProgressBar()
                 pbar.setRange(0, 100)
                 pbar.setValue(0)
-                pbar.setFixedHeight(10)
+                pbar.setFixedHeight(14)
                 pbar.setObjectName("batBar")
                 pbar.setTextVisible(False)   # 隐藏条内文字，避免遮挡（电量值由右侧标签显示）
                 self._bat_bar = pbar
                 sys_body.addWidget(pbar)
         shield = QLabel("🛡 一切正常")
-        shield.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % GREEN)
+        shield.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % GREEN)
         sys_body.addWidget(shield)
         lay.addWidget(sys_box)
         return side
@@ -670,14 +675,14 @@ class Dashboard(QWidget):
         main.addLayout(right, 4)
         outer.addLayout(main, 1)
 
-        # 底部紧凑横带：任务信息 / 传感器数据 / 推进器输出与告警
+        # 底部紧凑横带：任务信息 / 传感器数据 / 推进器输出与告警（Expanding 填满）
         bottom = QHBoxLayout()
         bottom.setSpacing(6)
         for b in (self._task_box, self._sensor_box, self._alarm_box):
-            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        self._task_box.setMinimumHeight(150)
-        self._sensor_box.setMinimumHeight(150)
-        self._alarm_box.setMinimumHeight(150)
+            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self._task_box.setMinimumHeight(132)
+        self._sensor_box.setMinimumHeight(132)
+        self._alarm_box.setMinimumHeight(132)
         bottom.addWidget(self._task_box, 1)
         bottom.addWidget(self._sensor_box, 1)
         bottom.addWidget(self._alarm_box, 2)
@@ -1879,7 +1884,7 @@ class Dashboard(QWidget):
         ]
         self._status_rows = []
         for label, value, color in rows:
-            rr, val = _kv(label, value, color)
+            rr, val = _kv(label, value, color, lab_size=16, val_size=18, lab_bold=True)
             col.addLayout(rr)
             self._status_rows.append((label, val))
         col.addStretch(1)
@@ -2618,8 +2623,8 @@ QPushButton#iconBtn { border:none; background:transparent; font-size:18px;
     color:%(sub)s; border-radius:8px; }
 QPushButton#iconBtn:hover { background:rgba(49,196,243,40); color:#fff; }
 
-QPushButton#navBtn { text-align:left; padding:8px 14px; border-radius:8px;
-    border:none; color:%(sub)s; font-size:16px; }
+QPushButton#navBtn { text-align:left; padding:11px 12px; border-radius:6px;
+    border:none; color:%(sub)s; font-size:17px; }
 QPushButton#navBtn:hover { background:rgba(49,196,243,30); color:#eaf7ff; }
 QPushButton#navBtn:checked { background:rgba(49,196,243,44); color:#ffffff; font-weight:800;
     border-left:4px solid #9fe7ff; }
