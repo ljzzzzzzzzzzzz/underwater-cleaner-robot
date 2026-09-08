@@ -159,8 +159,9 @@ class DepthGauge(QWidget):
             p.setBrush(grad)
             p.setPen(Qt.NoPen)
             p.drawRoundedRect(QRectF(bar_x, bottom - fill_h, bar_w, fill_h), 5, 5)
-        # 刻度线 + 数值标签（密集刻度 0/5/10/.../50）
+        # 刻度线 + 数值标签（密集刻度 0/5/10/.../50, 固定紧凑字号）
         p.setPen(QColor("#5b7a99"))
+        p.setFont(QFont("Consolas", 9, QFont.Bold))
         for m in range(0, 51, 5):
             yy = bottom - (bottom - top) * (m / 50.0)
             p.drawLine(bar_x - 8, int(yy), bar_x - 2, int(yy))
@@ -170,7 +171,7 @@ class DepthGauge(QWidget):
         p.setPen(QPen(QColor("#ffd166"), 2))
         p.drawLine(bar_x - 10, int(marker_y), bar_x + bar_w + 2, int(marker_y))
         p.setPen(QColor("#dcefff"))
-        p.setFont(QFont("Consolas", 12, QFont.Bold))
+        p.setFont(QFont("Consolas", 11, QFont.Bold))
         p.drawText(QRectF(bar_x + bar_w + 8, marker_y - 9, 40, 18),
                    Qt.AlignLeft | Qt.AlignVCenter, "%.1f" % self._depth)
         p.end()
