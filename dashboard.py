@@ -198,7 +198,7 @@ def _panel(title, accent=CYAN):
     bar.setStyleSheet("background:%s; border:none; border-radius:2px;" % accent)
     head = QLabel(title)
     head.setStyleSheet(
-        "color:%s; font-size:14px; font-weight:800; border:none; background:transparent;"
+        "color:%s; font-size:17px; font-weight:800; border:none; background:transparent;"
         "letter-spacing:1px;" % accent)
     hrow.addWidget(bar)
     hrow.addWidget(head, 1)
@@ -256,9 +256,9 @@ def _kv(label, value="--", color=TXT_SUB, unit="", mono=False, icon=None):
             lbl_ico.setPixmap(ico.pixmap(20, 20))
         row.addWidget(lbl_ico)
     lab = QLabel(label)
-    lab.setStyleSheet("color:%s; font-size:12px; letter-spacing:0.5px;" % TXT_SUB)
+    lab.setStyleSheet("color:%s; font-size:15px; letter-spacing:0.5px;" % TXT_SUB)
     val = QLabel("%s%s" % (value, unit))
-    val.setStyleSheet("color:%s; font-size:14px; font-weight:800;" % color)
+    val.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % color)
     if mono:
         _mono(val)
     row.addWidget(lab)
@@ -412,10 +412,10 @@ class Dashboard(QWidget):
         logo = QLabel("◉")
         logo.setStyleSheet("color:%s; font-size:24px;" % CYAN)
         brand = QLabel("ROV-SEAEXPLORER")
-        brand.setStyleSheet("color:%s; font-size:15px; font-weight:800;" % TXT)
+        brand.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % TXT)
         self._online_dot = StatusLight("#5b6b80", 12)
         self._online_txt = QLabel("离线")
-        self._online_txt.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
+        self._online_txt.setStyleSheet("color:%s; font-size:15px;" % TXT_SUB)
         left.addWidget(logo)
         left.addWidget(brand)
         left.addSpacing(14)
@@ -434,7 +434,7 @@ class Dashboard(QWidget):
 
         right = QHBoxLayout()
         self._time_lbl = QLabel("--:--:--")
-        self._time_lbl.setStyleSheet("color:%s; font-size:13px;" % TXT_SUB)
+        self._time_lbl.setStyleSheet("color:%s; font-size:16px;" % TXT_SUB)
         bell = QPushButton("🔔")
         gear = QPushButton("⚙")
         power = QPushButton("⏻")
@@ -472,7 +472,7 @@ class Dashboard(QWidget):
         school.addWidget(self._logo)
         name = QLabel("广州航海学院")
         name.setStyleSheet(
-            "color:%s; font-size:13px; font-weight:800; background:transparent;"
+            "color:%s; font-size:16px; font-weight:800; background:transparent;"
             "border:none;" % TXT)
         school.addWidget(name)
         right.addLayout(school)
@@ -514,7 +514,7 @@ class Dashboard(QWidget):
 
         # 导航
         nav_lbl = QLabel("功能导航")
-        nav_lbl.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT_SUB)
+        nav_lbl.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT_SUB)
         lay.addWidget(nav_lbl)
         self._nav_items = []
         nav_def = [("首页概览", 0), ("实时监控", 1), ("任务规划", 2), ("自主控制", 3),
@@ -555,7 +555,7 @@ class Dashboard(QWidget):
                 self._bat_bar = pbar
                 sys_body.addWidget(pbar)
         shield = QLabel("🛡 一切正常")
-        shield.setStyleSheet("color:%s; font-size:14px; font-weight:800;" % GREEN)
+        shield.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % GREEN)
         sys_body.addWidget(shield)
         lay.addWidget(sys_box)
         return side
@@ -603,7 +603,7 @@ class Dashboard(QWidget):
             lb = QLabel(label)
             lb.setStyleSheet("color:%s;font-size:11px;" % TXT_SUB)
             val = QLabel("--")
-            val.setStyleSheet("color:%s;font-size:13px;font-weight:800;" % color)
+            val.setStyleSheet("color:%s;font-size:16px;font-weight:800;" % color)
             _mono(val)
             h.addWidget(lb)
             h.addWidget(val)
@@ -612,7 +612,7 @@ class Dashboard(QWidget):
         # 连接
         self._tool_dot = StatusLight("#5b6b80", 11)
         self._tool_conn = QLabel("未连接")
-        self._tool_conn.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % TXT_SUB)
+        self._tool_conn.setStyleSheet("color:%s;font-size:15px;font-weight:700;" % TXT_SUB)
         con = QHBoxLayout()
         con.setSpacing(5)
         con.addWidget(self._tool_dot)
@@ -636,7 +636,7 @@ class Dashboard(QWidget):
         lay.addStretch(1)
         # 报警状态警示
         self._alarm_ind = QLabel("⚠ 正常")
-        self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % GREEN)
+        self._alarm_ind.setStyleSheet("color:%s;font-size:15px;font-weight:700;" % GREEN)
         lay.addWidget(self._alarm_ind)
         return bar
 
@@ -706,7 +706,7 @@ class Dashboard(QWidget):
             vcol = QVBoxLayout()
             vcol.setSpacing(4)
             cap = QLabel(tag)
-            cap.setStyleSheet("color:%s; font-size:13px; font-weight:700;" % color)
+            cap.setStyleSheet("color:%s; font-size:16px; font-weight:700;" % color)
             cap.setAlignment(Qt.AlignLeft)
             vcol.addWidget(cap)
             lab = QLabel("CAM 0%d 视频（连接后显示）" % side)
@@ -729,12 +729,12 @@ class Dashboard(QWidget):
                                 ("水温", "water_temp", "°C")):
             grp = QVBoxLayout()
             lab = QLabel(name)
-            lab.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
+            lab.setStyleSheet("color:%s; font-size:15px;" % TXT_SUB)
             val = QLabel("--")
             val.setStyleSheet("color:%s; font-size:20px; font-weight:800;" % TXT)
             _mono(val)
             unit_l = QLabel(unit)
-            unit_l.setStyleSheet("color:%s; font-size:12px;" % CYAN)
+            unit_l.setStyleSheet("color:%s; font-size:15px;" % CYAN)
             grp.addWidget(lab)
             grp.addWidget(val)
             grp.addWidget(unit_l)
@@ -817,7 +817,7 @@ class Dashboard(QWidget):
             "QProgressBar::chunk{background:%s;border-radius:3px;}" % (TXT_SUB, CYAN))
         body.addWidget(self._wp_prog)
         self._wp_state = QLabel("空闲 · 未开始 · 共 %d 个航点" % self._wp_table.rowCount())
-        self._wp_state.setStyleSheet("color:%s; font-size:14px; font-weight:700;" % TXT_SUB)
+        self._wp_state.setStyleSheet("color:%s; font-size:17px; font-weight:700;" % TXT_SUB)
         body.addWidget(self._wp_state)
         lay.addWidget(box, 1)
 
@@ -957,7 +957,7 @@ class Dashboard(QWidget):
         st.setSpacing(8)
         self._auto_dot = StatusLight("#5b6b80", 12)
         self._auto_state = QLabel("就绪 · 待机")
-        self._auto_state.setStyleSheet("color:%s; font-size:14px; font-weight:700;" % TXT_SUB)
+        self._auto_state.setStyleSheet("color:%s; font-size:17px; font-weight:700;" % TXT_SUB)
         st.addWidget(self._auto_dot)
         st.addWidget(self._auto_state)
         st.addStretch(1)
@@ -1015,7 +1015,7 @@ class Dashboard(QWidget):
             else:
                 value = fmt % _ZERO[key]
             lbl = QLabel(label)
-            lbl.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT_SUB)
+            lbl.setStyleSheet("color:%s; font-size:16px; font-weight:700;" % TXT_SUB)
             # 标签前加小图标
             grp = QWidget()
             gh = QHBoxLayout(grp)
@@ -1060,7 +1060,7 @@ class Dashboard(QWidget):
         if not self._lively:
             self._alarms.clear()
             self._alarm_ind.setText("⚠ 正常")
-            self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % GREEN)
+            self._alarm_ind.setStyleSheet("color:%s;font-size:15px;font-weight:700;" % GREEN)
             return
         v = self.tel.v
         new = set()
@@ -1083,10 +1083,10 @@ class Dashboard(QWidget):
         self._alarms = new
         if new:
             self._alarm_ind.setText("⚠ %d 项报警" % len(new))
-            self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:800;" % RED)
+            self._alarm_ind.setStyleSheet("color:%s;font-size:15px;font-weight:800;" % RED)
         else:
             self._alarm_ind.setText("⚠ 正常")
-            self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % GREEN)
+            self._alarm_ind.setStyleSheet("color:%s;font-size:15px;font-weight:700;" % GREEN)
 
     def _toggle_auto(self):
         mode = self._auto_mode.currentText()
@@ -1150,7 +1150,7 @@ class Dashboard(QWidget):
         top = QHBoxLayout()
         grp1 = QVBoxLayout()
         lab1 = QLabel("探测距离")
-        lab1.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
+        lab1.setStyleSheet("color:%s; font-size:15px;" % TXT_SUB)
         self._sonar_dist = QLabel("-- m")
         self._sonar_dist.setStyleSheet("color:%s; font-size:24px; font-weight:800;" % TXT)
         _mono(self._sonar_dist)
@@ -1158,7 +1158,7 @@ class Dashboard(QWidget):
         grp1.addWidget(self._sonar_dist)
         grp2 = QVBoxLayout()
         lab2 = QLabel("目标状态")
-        lab2.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
+        lab2.setStyleSheet("color:%s; font-size:15px;" % TXT_SUB)
         self._sonar_target = QLabel("未开机")
         self._sonar_target.setStyleSheet(
             "color:%s; font-size:18px; font-weight:800;" % TXT_SUB)
@@ -1166,7 +1166,7 @@ class Dashboard(QWidget):
         grp2.addWidget(self._sonar_target)
         grp3 = QVBoxLayout()
         lab3 = QLabel("目标数量")
-        lab3.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
+        lab3.setStyleSheet("color:%s; font-size:15px;" % TXT_SUB)
         self._sonar_cnt = QLabel("0")
         self._sonar_cnt.setStyleSheet("color:%s; font-size:24px; font-weight:800;" % GREEN)
         _mono(self._sonar_cnt)
@@ -1253,7 +1253,7 @@ class Dashboard(QWidget):
         }
         body.addWidget(self._curve_plot, 1)
         legend = QLabel("电压(绿) · 电量(青) · 舱温(黄) · 湿度(红) —— 实时趋势")
-        legend.setStyleSheet("color:%s;font-size:13px;" % TXT_SUB)
+        legend.setStyleSheet("color:%s;font-size:16px;" % TXT_SUB)
         body.addWidget(legend)
         lay.addWidget(box, 1)
         return page
@@ -1288,7 +1288,7 @@ class Dashboard(QWidget):
         top.addWidget(self._btn_selfcheck)
         top.addStretch(1)
         hint = QLabel("检查：指令构造/解析/限幅 + 91节点 收发帧与指令回路")
-        hint.setStyleSheet("color:%s;font-size:13px;" % TXT_SUB)
+        hint.setStyleSheet("color:%s;font-size:16px;" % TXT_SUB)
         top.addWidget(hint)
         body.addLayout(top)
         self._selfcheck_out = QTextBrowser()
@@ -1403,7 +1403,7 @@ class Dashboard(QWidget):
             row = QHBoxLayout()
             row.setSpacing(10)
             lab = QLabel(tag)
-            lab.setStyleSheet("color:%s; font-size:13px; font-weight:800;" % col)
+            lab.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % col)
             row.addWidget(lab)
             row.addWidget(QLabel("端口"))
             spin_p = QSpinBox()
@@ -1713,12 +1713,12 @@ class Dashboard(QWidget):
                                 ("水温", "water_temp", "°C")):
             row = QHBoxLayout()
             lab = QLabel(name)
-            lab.setStyleSheet("color:%s; font-size:12px;" % TXT_SUB)
+            lab.setStyleSheet("color:%s; font-size:15px;" % TXT_SUB)
             val = QLabel("--")
             val.setStyleSheet("color:%s; font-size:18px; font-weight:800;" % TXT)
             _mono(val)
             unit_l = QLabel(unit)
-            unit_l.setStyleSheet("color:%s; font-size:12px;" % CYAN)
+            unit_l.setStyleSheet("color:%s; font-size:15px;" % CYAN)
             row.addWidget(lab)
             row.addWidget(val)
             row.addWidget(unit_l)
@@ -1743,7 +1743,7 @@ class Dashboard(QWidget):
         # 深度指示：自绘仪表（刻度+填充+数值严格对齐）
         depth_col = QVBoxLayout()
         depth_lbl = QLabel("深度指示 (m)")
-        depth_lbl.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT_SUB)
+        depth_lbl.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT_SUB)
         depth_lbl.setAlignment(Qt.AlignLeft)
         self._depth_gauge = DepthGauge()
         depth_col.addWidget(depth_lbl)
@@ -1759,7 +1759,7 @@ class Dashboard(QWidget):
         c2lay.setSpacing(3)
         c2h = QHBoxLayout()
         cap2 = QLabel("● CAM 02")
-        cap2.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % CYAN)
+        cap2.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % CYAN)
         self._hide_cam2_btn = QCheckBox("隐藏 CAM2")
         self._hide_cam2_btn.setChecked(False)
         self._hide_cam2_btn.toggled.connect(self._toggle_cam2_hidden)
@@ -1845,7 +1845,7 @@ class Dashboard(QWidget):
         gl.setContentsMargins(10, 5, 10, 5)
         gl.setSpacing(10)
         title_t = QLabel("推进器")
-        title_t.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT_SUB)
+        title_t.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT_SUB)
         gl.addWidget(title_t)
         self._thr_ind = []
         for tag, name in (("T1", "左"), ("T2", "右")):
@@ -1853,9 +1853,9 @@ class Dashboard(QWidget):
             b.setSpacing(5)
             dot = StatusLight(GREEN, 12)
             tlab = QLabel("%s·%s" % (tag, name))
-            tlab.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT)
+            tlab.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT)
             val = QLabel("0%")
-            val.setStyleSheet("color:%s; font-size:13px; font-weight:800;" % CYAN)
+            val.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % CYAN)
             _mono(val)
             b.addWidget(dot)
             b.addWidget(tlab)
@@ -1918,7 +1918,7 @@ class Dashboard(QWidget):
         col.addWidget(mvbtn("上升", disabled=True, icon="up"))
         self._pct_up = QLabel("0%")
         self._pct_up.setAlignment(Qt.AlignCenter)
-        self._pct_up.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % CYAN)
+        self._pct_up.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % CYAN)
         col.addWidget(self._pct_up)
         col.addWidget(mvbtn("下降", disabled=True, icon="down"))
         col.addStretch(1)
@@ -1930,7 +1930,7 @@ class Dashboard(QWidget):
         mid.addWidget(mvbtn("左转", lambda: self._move("left"), icon="left"), 1, 0)
         self._pct_center = QLabel("0%")
         self._pct_center.setAlignment(Qt.AlignCenter)
-        self._pct_center.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % CYAN)
+        self._pct_center.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % CYAN)
         mid.addWidget(self._pct_center, 1, 1)
         mid.addWidget(mvbtn("右转", lambda: self._move("right"), icon="right"), 1, 2)
         mid.addWidget(mvbtn("后退", lambda: self._move("backward"), icon="down"), 2, 1)
@@ -1943,7 +1943,7 @@ class Dashboard(QWidget):
         colr.addWidget(mvbtn("左移", disabled=True, icon="left"))
         self._pct_side = QLabel("0%")
         self._pct_side.setAlignment(Qt.AlignCenter)
-        self._pct_side.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % CYAN)
+        self._pct_side.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % CYAN)
         colr.addWidget(self._pct_side)
         colr.addWidget(mvbtn("右移", disabled=True, icon="right"))
         colr.addStretch(1)
@@ -2038,7 +2038,7 @@ class Dashboard(QWidget):
             hrow = QHBoxLayout()
             hrow.setSpacing(6)
             hd = QLabel(tag)
-            hd.setStyleSheet("color:%s; font-size:12px; font-weight:800;" % color)
+            hd.setStyleSheet("color:%s; font-size:15px; font-weight:800;" % color)
             nm = QLabel(name)
             nm.setStyleSheet("color:%s; font-size:11px;" % TXT_SUB)
             hrow.addWidget(hd)
@@ -2047,7 +2047,7 @@ class Dashboard(QWidget):
             pwmL = QLabel("PWM")
             pwmL.setStyleSheet("color:%s; font-size:10px;" % TXT_SUB)
             pwm = QLabel("0")
-            pwm.setStyleSheet("color:%s; font-size:13px; font-weight:800;" % color)
+            pwm.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % color)
             _mono(pwm)
             hrow.addWidget(pwmL)
             hrow.addWidget(pwm)
@@ -2398,12 +2398,12 @@ class Dashboard(QWidget):
         self._online_dot.set_color(GREEN if ok else "#5b6b80")
         self._online_txt.setText("在线" if ok else "离线")
         self._online_txt.setStyleSheet(
-            "color:%s; font-size:12px; font-weight:700;" % (GREEN if ok else TXT_SUB))
+            "color:%s; font-size:15px; font-weight:700;" % (GREEN if ok else TXT_SUB))
         if hasattr(self, "_tool_dot"):
             self._tool_dot.set_color(GREEN if ok else "#5b6b80")
             self._tool_conn.setText("已连接" if ok else "未连接")
             self._tool_conn.setStyleSheet(
-                "color:%s; font-size:12px; font-weight:700;" % (GREEN if ok else TXT_SUB))
+                "color:%s; font-size:15px; font-weight:700;" % (GREEN if ok else TXT_SUB))
 
     def _tick_ui(self):
         now = datetime.now()
@@ -2515,13 +2515,13 @@ QWidget#root { background:qlineargradient(x1:0,y1:0,x2:1,y2:1,
 QLabel { color:%(sub)s; background:transparent; }
 QLabel[mono="true"] { font-family:"Consolas","Cascadia Mono","Microsoft YaHei UI"; }
 QLabel#video { background:#050b16; border:1px solid #27406b; border-radius:8px;
-    color:#7c93b5; font-size:15px; }
+    color:#7c93b5; font-size:16px; }
 
 /* ---- 按钮：暗底亮字，hover 发光，pressed 位移 ---- */
 QPushButton {
     background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #17325c,stop:1 #10233f);
     color:#d7ecff; border:1px solid #2f5186; border-radius:7px;
-    padding:5px 10px; font-size:12px;
+    padding:5px 10px; font-size:15px;
 }
 QPushButton:hover { border-color:%(cyan)s; background:#1c3f70;
     color:#ffffff; }
@@ -2538,7 +2538,7 @@ QPushButton#iconBtn { border:none; background:transparent; font-size:18px;
 QPushButton#iconBtn:hover { background:rgba(49,196,243,40); color:#fff; }
 
 QPushButton#navBtn { text-align:left; padding:8px 14px; border-radius:8px;
-    border:none; color:%(sub)s; font-size:13px; }
+    border:none; color:%(sub)s; font-size:16px; }
 QPushButton#navBtn:hover { background:rgba(49,196,243,30); color:#eaf7ff; }
 QPushButton#navBtn:checked { background:rgba(49,196,243,44); color:#ffffff; font-weight:800;
     border-left:4px solid #9fe7ff; }
@@ -2580,7 +2580,7 @@ QCheckBox::indicator:checked { background:%(cyan)s; border-color:%(cyan)s; }
 
 QTextBrowser#alarm { background:rgba(8,16,32,200);
     border:1px solid #22395e; border-radius:8px;
-    color:#cfe4ff; font-size:12px; padding:4px; }
+    color:#cfe4ff; font-size:15px; padding:4px; }
 
 QSlider::groove:horizontal { height:6px; background:#14233f; border-radius:3px; }
 QSlider::handle:horizontal { width:16px; margin:-6px 0; border-radius:8px;
@@ -2593,7 +2593,7 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     # 全局无衬线字体；数字走等宽（见 mono 属性 QSS）
-    app.setFont(QFont("Microsoft YaHei UI", 10))
+    app.setFont(QFont("Microsoft YaHei UI", 13))
     w = Dashboard()
     w.setWindowTitle("智能水下清洁机器人控制系统 V1.0 · 监控大屏")
     w.resize(1600, 940)
