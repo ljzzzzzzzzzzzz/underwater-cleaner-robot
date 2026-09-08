@@ -1988,29 +1988,43 @@ class Dashboard(QWidget):
         cfg.addStretch(1)
         body.addLayout(cfg)
 
-        # 灯光 & 刷子 & 转速 快捷
-        q = QHBoxLayout()
-        q.addWidget(QLabel("灯光"))
+        # 灯光（多灯开关 + 亮度）
+        lrow = QHBoxLayout()
+        lrow.setSpacing(8)
+        lrow.addWidget(QLabel("灯光"))
+        self._light1 = QCheckBox("灯1")
+        self._light2 = QCheckBox("灯2")
+        self._light3 = QCheckBox("灯3")
+        for b in (self._light1, self._light2, self._light3):
+            b.setStyleSheet("color:%s;" % TXT)
+            b.toggled.connect(self._apply_light)
+            lrow.addWidget(b)
+        lrow.addWidget(QLabel("亮度"))
         self._light = QSlider(Qt.Horizontal)
         self._light.setRange(0, 100)
         self._light.valueChanged.connect(self._on_light)
-        q.addWidget(self._light, 1)
-        q.addWidget(QLabel("刷速"))
-        self._bs = QSpinBox()
-        self._bs.setRange(0, 100)
-        self._bs.setValue(60)
-        self._bs.valueChanged.connect(self._on_bs)
-        q.addWidget(self._bs)
+        lrow.addWidget(self._light, 1)
+        body.addLayout(lrow)
+
+        # 刷子（三路开关 + 转速）
+        brow = QHBoxLayout()
+        brow.setSpacing(8)
+        brow.addWidget(QLabel("刷子"))
         self._b1 = QCheckBox("刷1")
         self._b2 = QCheckBox("刷2")
         self._b3 = QCheckBox("刷3")
         for b in (self._b1, self._b2, self._b3):
             b.setStyleSheet("color:%s;" % TXT)
             b.toggled.connect(self._on_brush)
-        q.addWidget(self._b1)
-        q.addWidget(self._b2)
-        q.addWidget(self._b3)
-        body.addLayout(q)
+            brow.addWidget(b)
+        brow.addWidget(QLabel("刷速"))
+        self._bs = QSpinBox()
+        self._bs.setRange(0, 100)
+        self._bs.setValue(60)
+        self._bs.valueChanged.connect(self._on_bs)
+        brow.addWidget(self._bs)
+        brow.addStretch(1)
+        body.addLayout(brow)
 
     def _build_task(self):
         body = self._task_body
@@ -2382,13 +2396,25 @@ class Dashboard(QWidget):
         self._sync_quick_ui()
 
     def _on_light(self, v):
+        self._apply_light()
+
+    def _apply_light(self, *_):
+        """多灯：任一路灯开启则亮度生效，否则关灯。"""
+        on = False
+        if hasattr(self, "_light1"):
+            on = any(b.isChecked() for b in (self._light1, self._light2, self._light3))
+        elif self._light.value() > 0:
+            on = True
+        v = self._light.value() if (on and hasattr(self, "_light")) else 0
         self._plan["light"] = v
-        self._btn_light.setText("☀ 灯光%d" % v)
+        if hasattr(self, "_btn_light"):
+            self._btn_light.setText("☀ 灯光%d" % v)
         self._send_plan(announce=False)
 
     def light_toggle(self):
         cur = self._light.value()
         self._light.setValue(0 if cur > 0 else 80)
+        self._apply_light()
 
     def _on_bs(self, v):
         self._plan["brush_speed"] = v
@@ -2401,6 +2427,11 @@ class Dashboard(QWidget):
 
     def _sync_quick_ui(self):
         p = self._plan
+        if getattr(self, "_light1", None) is not None:
+            on = p["light"] > 0
+            self._light1.setChecked(on)
+            self._light2.setChecked(False)
+            self._light3.setChecked(False)
         self._light.setValue(p["light"])
         self._bs.setValue(int(p["brush_speed"]))
         self._b1.setChecked(p["brush"][0] == "1")
