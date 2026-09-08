@@ -1771,8 +1771,8 @@ class Dashboard(QWidget):
         self._video_label2 = QLabel("CAM 02 待接入（端口 12346）")
         self._video_label2.setObjectName("video")
         self._video_label2.setAlignment(Qt.AlignCenter)
-        self._video_label2.setMinimumSize(200, 110)
-        self._video_label2.setMaximumHeight(150)
+        self._video_label2.setMinimumSize(360, 190)
+        self._video_label2.setMaximumHeight(240)
         c2lay.addWidget(self._video_label2, 1)
         body.addWidget(self._cam2_widget)
 
