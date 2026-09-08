@@ -345,8 +345,7 @@ class Dashboard(QWidget):
         self._receiver = None
         self._last_frame = None
         self._video_on = False
-        # ---- 双摄像头：CAM1 主通道 / CAM2 独立通道(可翻页、可隐藏) ----
-        self._video_cam = 1                 # 首页当前显示哪路(1=CAM1 2=CAM2)
+        # ---- 双摄像头：CAM1 主通道 / CAM2 独立通道(首页小窗可隐藏) ----
         self._frames = {1: None, 2: None}   # 两路最近 BGR 帧
         self._sock2 = None                  # CAM2 视频 socket(仅收流)
         self._recv2 = None
@@ -1501,7 +1500,7 @@ class Dashboard(QWidget):
         body.addWidget(osd_frame)
 
         vrow = QHBoxLayout()
-        self._video_label = QLabel("未连接视频（连接 主控后自动显示）")
+        self._video_label = QLabel("CAM 01 未连接（连接主控后显示）")
         self._video_label.setObjectName("video")
         self._video_label.setAlignment(Qt.AlignCenter)
         self._video_label.setMinimumSize(560, 300)
@@ -1521,14 +1520,31 @@ class Dashboard(QWidget):
         vrow.addLayout(depth_col)
         body.addLayout(vrow, 1)
 
-        # 底栏（CAM1/CAM2 翻页切换 + 视频控制）
+        # CAM2 小窗（首页第二路，可隐藏）
+        self._cam2_widget = QWidget()
+        c2lay = QVBoxLayout(self._cam2_widget)
+        c2lay.setContentsMargins(0, 0, 0, 0)
+        c2lay.setSpacing(3)
+        c2h = QHBoxLayout()
+        cap2 = QLabel("● CAM 02")
+        cap2.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % CYAN)
+        self._hide_cam2_btn = QCheckBox("隐藏 CAM2")
+        self._hide_cam2_btn.setChecked(False)
+        self._hide_cam2_btn.toggled.connect(self._toggle_cam2_hidden)
+        c2h.addWidget(cap2)
+        c2h.addStretch(1)
+        c2h.addWidget(self._hide_cam2_btn)
+        c2lay.addLayout(c2h)
+        self._video_label2 = QLabel("CAM 02 待接入（端口 12346）")
+        self._video_label2.setObjectName("video")
+        self._video_label2.setAlignment(Qt.AlignCenter)
+        self._video_label2.setMinimumSize(200, 110)
+        self._video_label2.setMaximumHeight(150)
+        c2lay.addWidget(self._video_label2, 1)
+        body.addWidget(self._cam2_widget)
+
+        # 底栏（视频控制）
         bar = QHBoxLayout()
-        self._cam_btn = QPushButton("● CAM 01")
-        self._cam_btn.setObjectName("ghostBtn")
-        self._cam_btn.setCursor(Qt.PointingHandCursor)
-        self._cam_btn.setToolTip("切换显示 CAM 1 / CAM 2（第二路可翻页隐藏）")
-        self._cam_btn.clicked.connect(self._switch_cam)
-        bar.addWidget(self._cam_btn)
         bar.addStretch(1)
         self._btn_video = QPushButton("打开视频")
         self._btn_photo = QPushButton("📷 截图")
@@ -1948,26 +1964,10 @@ class Dashboard(QWidget):
 
     def _on_cam2_broken(self, reason):
         self._close_cam2()
-        if self._video_cam == 2:
-            self._flash("CAM2 视频通道已断开", "warn")
+        self._flash("CAM2 视频通道已断开", "warn")
 
-    def _switch_cam(self):
-        """首页实时画面：在 CAM 1 / CAM 2 之间翻页切换显示源（CAM2 可隐藏）"""
-        self._video_cam = 2 if self._video_cam == 1 else 1
-        self._cam_btn.setText("● CAM 0%d" % self._video_cam)
-        if self._video_cam == 2 and self._recv2 is None:
-            self.connect_cam2(quiet=True)
-        if not self._video_on:
-            self._flash("已切换到 CAM 0%d" % self._video_cam, "info")
-            return
-        bgr = self._frames.get(self._video_cam)
-        if bgr is not None:
-            self._on_frame(bgr, self._video_cam)
-            self._flash("已切换到 CAM 0%d" % self._video_cam, "info")
-        else:
-            self._video_label.clear()
-            self._video_label.setText(
-                "CAM 0%d 无信号（请确认该路模拟器/摄像头已开）" % self._video_cam)
+    def _toggle_cam2_hidden(self, hidden):
+        self._cam2_widget.setVisible(not hidden)
 
     def _on_broken(self, reason):
         if self._connected:
@@ -1986,9 +1986,9 @@ class Dashboard(QWidget):
 
     def _on_frame(self, bgr, cam=1):
         """双摄像头帧路由：cam=1 主控 CAM1 / cam=2 CAM2。
-        首页只显示当前选中 CAM；实时监控页 CAM1 左 CAM2 右；自主控制页跟随 CAM1。"""
+        首页主画面=CAM1、小窗=CAM2；实时监控页左 CAM1 右 CAM2；自主控制页 CAM1。"""
         self._frames[cam] = bgr
-        if cam == self._video_cam:
+        if cam == 1:
             t = time.time()
             dt = t - self._last_frame_t
             self._last_frame_t = t
@@ -2000,12 +2000,18 @@ class Dashboard(QWidget):
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb.shape
         img = QImage(rgb.data, w, h, ch * w, QImage.Format_RGB888).copy()
-        # 首页实时画面：仅当前选中 CAM
-        if cam == self._video_cam and self._video_label.width() > 0:
+        # 首页主画面 = CAM1
+        if cam == 1 and self._video_label.width() > 0:
             pix = QPixmap.fromImage(img).scaled(
                 self._video_label.width(), self._video_label.height(),
                 Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self._video_label.setPixmap(pix)
+        # 首页 CAM2 小窗
+        if cam == 2 and hasattr(self, "_video_label2") and self._video_label2.width() > 0:
+            pix2c = QPixmap.fromImage(img).scaled(
+                self._video_label2.width(), self._video_label2.height(),
+                Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self._video_label2.setPixmap(pix2c)
         # 实时监控页：CAM1 左 / CAM2 右，各自实时
         if cam == 1 and hasattr(self, "_monitor_video") and self._monitor_video.width() > 0:
             pix2 = QPixmap.fromImage(img).scaled(
@@ -2031,13 +2037,17 @@ class Dashboard(QWidget):
         self._video_on = not self._video_on
         if self._video_on:
             self._btn_video.setText("关闭视频")
-            self._flash("视频显示已开启（主控帧流）", "ok")
+            self._flash("视频显示已开启（CAM1/CAM2 双路）", "ok")
             self._video_label.setText("等待视频帧...")
-            if self._last_frame is not None:
-                self._on_frame(self._last_frame)
+            for cam in (1, 2):
+                bgr = self._frames.get(cam)
+                if bgr is not None:
+                    self._on_frame(bgr, cam)
         else:
             self._btn_video.setText("打开视频")
             self._video_label.clear()
+            if hasattr(self, "_video_label2"):
+                self._video_label2.clear()
             self._video_idle()
 
     def save_shot(self):
