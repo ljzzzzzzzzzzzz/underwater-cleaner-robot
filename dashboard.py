@@ -35,6 +35,7 @@ from PySide2.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QFileDialog,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -366,6 +367,7 @@ class Dashboard(QWidget):
         # ---- 模块数据（设置/数据记录/日志/曲线）----
         self._recording = True
         self._lively = False    # 展会默认归零；开“动态演示数值”后显示模拟跳动值
+        self._alarms = set()    # 当前生效的报警集合
         self._cmd_rows = []     # (time, 指令行, 描述)
         self._tele_rows = []    # (time, 深度, 航向, 俯仰, 横滚, 水温, 电压)
         self._log_rows = []     # (time, level, text)
@@ -516,7 +518,8 @@ class Dashboard(QWidget):
         lay.addWidget(nav_lbl)
         self._nav_items = []
         nav_def = [("首页概览", 0), ("实时监控", 1), ("任务规划", 2), ("自主控制", 3),
-                   ("数据管理", 5), ("系统设置", 4), ("日志信息", 6), ("声纳探测", 7)]
+                   ("数据管理", 5), ("系统设置", 4), ("日志信息", 6), ("声纳探测", 7),
+                   ("历史曲线", 8), ("系统自检", 9)]
         for name, page in nav_def:
             b = QPushButton(name)
             b.setCheckable(True)
@@ -572,6 +575,8 @@ class Dashboard(QWidget):
         self._stack.addWidget(self._data_page())
         self._stack.addWidget(self._logs_page())
         self._stack.addWidget(self._sonar_page())
+        self._stack.addWidget(self._curve_page())
+        self._stack.addWidget(self._selfcheck_page())
         self._stack.setCurrentIndex(0)
         return host
 
@@ -629,6 +634,11 @@ class Dashboard(QWidget):
         lay.addLayout(h)
 
         lay.addStretch(1)
+        # 报警状态警示
+        self._alarm_ind = QLabel("⚠ 正常")
+        self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % GREEN)
+        lay.addWidget(self._alarm_ind)
+        lay.addWidget(vsep())
         if getattr(self, "_lively", False):
             tm = QLabel("演示模式")
         else:
@@ -1050,6 +1060,41 @@ class Dashboard(QWidget):
                 continue
             val.setText(fmt % v[key])
 
+    def _check_alarms(self):
+        """阈值告警：在“动态演示数值”下按系统状态检查，中性演示不误报。"""
+        if not hasattr(self, "_alarm_ind"):
+            return
+        if not self._lively:
+            self._alarms.clear()
+            self._alarm_ind.setText("⚠ 正常")
+            self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % GREEN)
+            return
+        v = self.tel.v
+        new = set()
+        if v["voltage"] < 42.0:
+            new.add("电压偏低")
+        if v["battery"] < 20:
+            new.add("电量过低")
+        if v["cabin_temp"] > 30.0:
+            new.add("舱内温度过高")
+        if v["water_temp"] > 30.0:
+            new.add("水温偏高")
+        if v["motor_temp"] > 45.0:
+            new.add("电机温度过高")
+        if v["humidity"] > 70:
+            new.add("舱内湿度过高")
+        for a in (new - self._alarms):
+            self._flash("报警：%s" % a, "err")
+        for a in (self._alarms - new):
+            self._flash("恢复正常：%s" % a, "ok")
+        self._alarms = new
+        if new:
+            self._alarm_ind.setText("⚠ %d 项报警" % len(new))
+            self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:800;" % RED)
+        else:
+            self._alarm_ind.setText("⚠ 正常")
+            self._alarm_ind.setStyleSheet("color:%s;font-size:12px;font-weight:700;" % GREEN)
+
     def _toggle_auto(self):
         mode = self._auto_mode.currentText()
         if mode == "手动控制":
@@ -1187,6 +1232,106 @@ class Dashboard(QWidget):
         if hasattr(self, "_sonar_zero"):
             self._sonar_zero.setData([0, 50], [0, 0])
 
+    # ------------------------------------------------------------------
+    # 历史曲线页（大图时间轴趋势：电压/电量/舱温/湿度）
+    # ------------------------------------------------------------------
+    def _curve_page(self):
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(10, 6, 10, 6)
+        lay.setSpacing(10)
+        box, body = _panel("历史曲线 · 实时趋势", CYAN)
+        self._curve_plot = pg.PlotWidget()
+        self._curve_plot.setBackground(QColor(BG0))
+        self._curve_plot.showGrid(x=True, y=True, alpha=0.2)
+        self._curve_plot.hideButtons()
+        self._curve_plot.setLabel("left", "数值", color=TXT_SUB)
+        self._curve_plot.setLabel("bottom", "采样", color=TXT_SUB)
+        for ax in ("left", "bottom"):
+            self._curve_plot.getAxis(ax).setTextPen(QColor(TXT_SUB))
+        self._curve_plot.setDownsampling(auto=True)
+        self._curve_plot.addLegend(offset=(10, 10))
+        self._curve_data = {"volt": [], "bat": [], "ctemp": [], "hum": []}
+        self._curve_lines = {
+            "volt": self._curve_plot.plot(pen=pg.mkPen(GREEN, width=2), name="电压"),
+            "bat": self._curve_plot.plot(pen=pg.mkPen(CYAN, width=2), name="电量"),
+            "ctemp": self._curve_plot.plot(pen=pg.mkPen(YELLOW, width=2), name="舱温"),
+            "hum": self._curve_plot.plot(pen=pg.mkPen(RED, width=2), name="湿度"),
+        }
+        body.addWidget(self._curve_plot, 1)
+        legend = QLabel("电压(绿) · 电量(青) · 舱温(黄) · 湿度(红) —— 随“动态演示数值”变化")
+        legend.setStyleSheet("color:%s;font-size:13px;" % TXT_SUB)
+        body.addWidget(legend)
+        lay.addWidget(box, 1)
+        return page
+
+    def _update_curve(self, v_sys):
+        if not hasattr(self, "_curve_lines"):
+            return
+        for k, src in (("volt", "voltage"), ("bat", "battery"),
+                       ("ctemp", "cabin_temp"), ("hum", "humidity")):
+            self._curve_data[k].append(v_sys[src])
+        if len(self._curve_data["volt"]) > 240:
+            for k in self._curve_data:
+                self._curve_data[k].pop(0)
+        xs = list(range(len(self._curve_data["volt"])))
+        for k, line in self._curve_lines.items():
+            line.setData(xs, self._curve_data[k])
+        self._curve_plot.enableAutoRange(axis="y")
+
+    # ------------------------------------------------------------------
+    # 系统自检页（复用 self_check.py）
+    # ------------------------------------------------------------------
+    def _selfcheck_page(self):
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(10, 6, 10, 6)
+        lay.setSpacing(10)
+        box, body = _panel("系统自检 · 协议 / 模拟回路", CYAN)
+        top = QHBoxLayout()
+        self._btn_selfcheck = QPushButton("▶ 开始自检")
+        self._btn_selfcheck.setObjectName("solidBtn")
+        self._btn_selfcheck.clicked.connect(self._run_selfcheck)
+        top.addWidget(self._btn_selfcheck)
+        top.addStretch(1)
+        hint = QLabel("检查：指令构造/解析/限幅 + 模拟91节点 收发帧与指令回路")
+        hint.setStyleSheet("color:%s;font-size:13px;" % TXT_SUB)
+        top.addWidget(hint)
+        body.addLayout(top)
+        self._selfcheck_out = QTextBrowser()
+        self._selfcheck_out.setObjectName("alarm")
+        self._selfcheck_out.setPlainText("点击“开始自检”执行本地协议与模拟回路自检。")
+        body.addWidget(self._selfcheck_out, 1)
+        lay.addWidget(box, 1)
+        return page
+
+    def _run_selfcheck(self):
+        self._btn_selfcheck.setEnabled(False)
+        self._selfcheck_out.setPlainText("正在自检...\n")
+        import contextlib
+
+        def worker():
+            import io
+            try:
+                import self_check as sc
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    sc.FAILED.clear()
+                    sc.test_protocol()
+                    sc.test_mock_roundtrip()
+                ok = not sc.FAILED
+                text = buf.getvalue()
+                text += "\n=> " + ("全部自检通过 ✔" if ok else "自检未通过：" + ", ".join(sc.FAILED))
+            except Exception as e:
+                text = "自检异常：%s" % e
+            QTimer.singleShot(0, lambda: self._finish_selfcheck(text))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _finish_selfcheck(self, text):
+        self._selfcheck_out.setPlainText(text)
+        self._btn_selfcheck.setEnabled(True)
+
     # =====================================================================
     # 模块页：系统设置 / 数据管理 / 日志信息 / 实时曲线
     # =====================================================================
@@ -1240,13 +1385,19 @@ class Dashboard(QWidget):
 
         btn_save = QPushButton("保存设置")
         btn_reset = QPushButton("恢复默认")
-        for b in (btn_save, btn_reset):
+        btn_exp = QPushButton("导出配置")
+        btn_imp = QPushButton("导入配置")
+        for b in (btn_save, btn_reset, btn_exp, btn_imp):
             b.setObjectName("solidBtn")
         btn_save.clicked.connect(self._save_settings)
         btn_reset.clicked.connect(self._reset_settings)
+        btn_exp.clicked.connect(self._export_config)
+        btn_imp.clicked.connect(self._import_config)
         brow = QHBoxLayout()
         brow.addWidget(btn_save)
         brow.addWidget(btn_reset)
+        brow.addWidget(btn_exp)
+        brow.addWidget(btn_imp)
         body.addLayout(brow)
         grid.addWidget(box, 0, 0, Qt.AlignTop)
 
@@ -1353,6 +1504,37 @@ class Dashboard(QWidget):
         self._ip.setText("192.168.1.91")
         self._port.setText("12345")
         self._flash("已恢复默认设置", "ok")
+
+    def _export_config(self):
+        path, _ = QFileDialog.getSaveFileName(self, "导出配置",
+                                              "robot_config.json", "JSON (*.json)")
+        if not path:
+            return
+        import json as _json
+        with open(path, "w", encoding="utf-8") as f:
+            _json.dump(self.config.to_dict(), f, ensure_ascii=False, indent=2)
+        self._flash("配置已导出：%s" % path, "ok")
+
+    def _import_config(self):
+        path, _ = QFileDialog.getOpenFileName(self, "导入配置",
+                                              "", "JSON (*.json)")
+        if not path:
+            return
+        import json as _json
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = _json.load(f)
+        except Exception as e:
+            self._flash("导入配置失败：%s" % e, "err")
+            return
+        self.config._data = data
+        self.config.save()
+        # 刷新设置页
+        self._set_ip.setText(data.get("robot91", {}).get("ip", "192.168.1.91"))
+        self._set_port.setText(str(data.get("robot91", {}).get("port", 12345)))
+        self._ip.setText(data.get("robot91", {}).get("ip", "192.168.1.91"))
+        self._port.setText(str(data.get("robot91", {}).get("port", 12345)))
+        self._flash("配置已导入并生效", "ok")
 
     # ---------------- 数据管理 ----------------
     def _data_page(self):
@@ -2239,6 +2421,7 @@ class Dashboard(QWidget):
         # 传感器/OSD/机器数据等保持归零；仅“系统状态”在开“动态演示数值”时变化
         v = _ZERO
         v_sys = self.tel.v if self._lively else _ZERO
+        self._update_curve(v_sys)
         for key, lbl in self._osd.items():
             lbl.setText("%.1f" % v[key])
         if hasattr(self, "_depth_gauge"):
@@ -2274,6 +2457,7 @@ class Dashboard(QWidget):
         self._refresh_data_stats()
         self._update_sonar()
         self._update_auto_data()
+        self._check_alarms()
 
     def _flash(self, text, level="ok"):
         if self._log is not None:
@@ -2301,6 +2485,27 @@ class Dashboard(QWidget):
             self._refresh_data_stats()
 
     # =====================================================================
+    def keyPressEvent(self, event):
+        """键盘操控：WASD / 方向键 控制运动，空格停止"""
+        k = event.key()
+        handled = True
+        if k in (Qt.Key_W, Qt.Key_Up):
+            self._move("forward")
+        elif k in (Qt.Key_S, Qt.Key_Down):
+            self._move("backward")
+        elif k in (Qt.Key_A, Qt.Key_Left):
+            self._move("left")
+        elif k in (Qt.Key_D, Qt.Key_Right):
+            self._move("right")
+        elif k == Qt.Key_Space:
+            self.stop_idle()
+        else:
+            handled = False
+        if handled:
+            event.accept()
+        else:
+            super(Dashboard, self).keyPressEvent(event)
+
     def closeEvent(self, event):
         try:
             self.clock_timer.stop()
