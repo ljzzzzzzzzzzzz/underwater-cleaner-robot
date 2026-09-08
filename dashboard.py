@@ -1371,6 +1371,11 @@ class Dashboard(QWidget):
         r3.addWidget(self._set_layout)
         body.addLayout(r3)
 
+        self._chk_lively = QCheckBox("动态演示数值（默认归零）")
+        self._chk_lively.setChecked(self._lively)
+        self._chk_lively.toggled.connect(self._on_lively)
+        body.addWidget(self._chk_lively)
+
         btn_save = QPushButton("保存设置")
         btn_reset = QPushButton("恢复默认")
         btn_exp = QPushButton("导出配置")
@@ -1608,6 +1613,11 @@ class Dashboard(QWidget):
         self._recording = on
         self._btn_rec.setText("停止记录" if on else "开始记录")
         self._flash("数据记录 %s" % ("开启" if on else "暂停"), "info")
+
+    def _on_lively(self, on):
+        self._lively = on
+        self._tick_ui()
+        self._flash("动态演示数值：%s" % ("动态演示" if on else "归零中性"), "info")
 
     def _append_data_row(self, kind, content, desc):
         self._apply_data_filter()
