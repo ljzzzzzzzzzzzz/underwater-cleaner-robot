@@ -23,18 +23,18 @@ import threading
 import time
 from datetime import datetime
 import os
-# 覆盖错误的环境变量，改成正确名字 PySide6
-os.environ['PYQTGRAPH_QT_LIB'] = "PySide6"
+# 覆盖错误的环境变量，改成正确名字 PySide2
+os.environ['PYQTGRAPH_QT_LIB'] = "PySide2"
 
-os.environ.setdefault("PYQTGRAPH_QT_LIB", "PySide6")
+os.environ.setdefault("PYQTGRAPH_QT_LIB", "PySide2")
 
 import numpy as np
 import pyqtgraph as pg
 import cv2
-from PySide6.QtCore import QSize, Qt, QRectF, QTimer, Signal
-from PySide6.QtGui import (QColor, QFont, QImage, QLinearGradient, QPainter,
+from PySide2.QtCore import QSize, Qt, QRectF, QTimer, Signal
+from PySide2.QtGui import (QColor, QFont, QImage, QLinearGradient, QPainter,
                            QPen, QPixmap, QRadialGradient)
-from PySide6.QtWidgets import (
+from PySide2.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
@@ -237,8 +237,8 @@ ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
 def load_icon(name):
     """从 assets/icons 加载 SVG；文件缺失/插件缺失返回 None（调用方回落文字）"""
-    from PySide6.QtGui import QIcon
-    from PySide6.QtWidgets import QApplication as _App
+    from PySide2.QtGui import QIcon
+    from PySide2.QtWidgets import QApplication as _App
     path = os.path.join(ASSET_DIR, "icons", name + ".svg")
     if not os.path.exists(path):
         return None
@@ -251,7 +251,7 @@ def load_icon(name):
 
 def _kv(label, value="--", color=TXT_SUB, unit="", mono=False, icon=None,
         lab_size=15, val_size=17, icon_size=22, lab_bold=False):
-    from PySide6.QtGui import QPixmap
+    from PySide2.QtGui import QPixmap
     row = QHBoxLayout()
     row.setSpacing(8)
     if icon:
