@@ -39,20 +39,20 @@ def check(name, cond, detail=""):
 def test_protocol():
     print("\n== 1) 协议自测 ==")
     line = proto.build_command("10", 90, 1, 180, -1, 180, "101", 60, 80)
-    check("7字段构造", line == "10 90 1,-1 180,180 101 60 80", line)
+    check("7字段构造", line == "10 90 1,-1 180,180 10100 60 80", line)
     data = proto.parse_command(line)
     check("解析", data and data["type"] == "command"
-          and data["angle"] == 90 and data["brush_state"] == "101" and data["light"] == 80, str(data))
+          and data["angle"] == 90 and data["brush_state"] == "10100" and data["light"] == 80, str(data))
     # 限幅
     line2 = proto.build_command("10", 999, 5, 3000, -5, -100, "1x1", 150, 250)
-    expect = "10 180 1,-1 255,0 101 100 100"
+    expect = "10 180 1,-1 255,0 10100 100 100"
     check("越界限幅", line2 == expect, line2)
     check("0000 断开解析", proto.parse_command("0000")["type"] == "disconnect")
     check("垃圾输入返回None", proto.parse_command("hello") is None)
-    check("急停指令", proto.emergency_stop_command() == "00 90 0,0 0,0 000 0 0")
+    check("急停指令", proto.emergency_stop_command() == "00 90 0,0 0,0 00000 0 0")
     # 6 字段裁剪
     six = proto.cmd_to_9_12_style(line)
-    check("6字段裁剪", six == "10 90 1,-1 180,180 101 60", six)
+    check("6字段裁剪", six == "10 90 1,-1 180,180 10100 60", six)
 
 
 def test_mock_roundtrip():
@@ -85,7 +85,7 @@ def test_mock_roundtrip():
         time.sleep(0.5)
         st = server.state.snapshot()
         ok = st["mode"] == "10" and st["angle"] == 135 and st["dir1"] == -1 \
-            and st["spd2"] == 90 and st["brush"] == "010" and int(st["brush_speed"]) == 40 \
+            and st["spd2"] == 90 and st["brush"] == "01000" and int(st["brush_speed"]) == 40 \
             and st["light"] == 100
         check("模拟状态正确", ok, str(st))
     finally:
