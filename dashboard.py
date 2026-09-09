@@ -22,16 +22,19 @@ import sys
 import threading
 import time
 from datetime import datetime
+import os
+# 覆盖错误的环境变量，改成正确名字 PySide6
+os.environ['PYQTGRAPH_QT_LIB'] = "PySide6"
 
-os.environ.setdefault("PYQTGRAPH_QT_LIB", "PySide2")
+os.environ.setdefault("PYQTGRAPH_QT_LIB", "PySide6")
 
 import numpy as np
 import pyqtgraph as pg
 import cv2
-from PySide2.QtCore import QSize, Qt, QRectF, QTimer, Signal
-from PySide2.QtGui import (QColor, QFont, QImage, QLinearGradient, QPainter,
+from PySide6.QtCore import QSize, Qt, QRectF, QTimer, Signal
+from PySide6.QtGui import (QColor, QFont, QImage, QLinearGradient, QPainter,
                            QPen, QPixmap, QRadialGradient)
-from PySide2.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
@@ -234,8 +237,8 @@ ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
 def load_icon(name):
     """从 assets/icons 加载 SVG；文件缺失/插件缺失返回 None（调用方回落文字）"""
-    from PySide2.QtGui import QIcon
-    from PySide2.QtWidgets import QApplication as _App
+    from PySide6.QtGui import QIcon
+    from PySide6.QtWidgets import QApplication as _App
     path = os.path.join(ASSET_DIR, "icons", name + ".svg")
     if not os.path.exists(path):
         return None
@@ -246,20 +249,22 @@ def load_icon(name):
     return icon
 
 
-def _kv(label, value="--", color=TXT_SUB, unit="", mono=False, icon=None):
-    from PySide2.QtGui import QPixmap
+def _kv(label, value="--", color=TXT_SUB, unit="", mono=False, icon=None,
+        lab_size=15, val_size=17, icon_size=22, lab_bold=False):
+    from PySide6.QtGui import QPixmap
     row = QHBoxLayout()
     row.setSpacing(8)
     if icon:
         ico = load_icon(icon)
         lbl_ico = QLabel()
         if ico is not None:
-            lbl_ico.setPixmap(ico.pixmap(20, 20))
+            lbl_ico.setPixmap(ico.pixmap(icon_size, icon_size))
         row.addWidget(lbl_ico)
+    _fw = "700" if lab_bold else "400"
     lab = QLabel(label)
-    lab.setStyleSheet("color:%s; font-size:15px; letter-spacing:0.5px;" % TXT_SUB)
+    lab.setStyleSheet("color:%s; font-size:%dpx; letter-spacing:0.5px; font-weight:%s;" % (TXT_SUB, lab_size, _fw))
     val = QLabel("%s%s" % (value, unit))
-    val.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % color)
+    val.setStyleSheet("color:%s; font-size:%dpx; font-weight:800;" % (color, val_size))
     if mono:
         _mono(val)
     row.addWidget(lab)
@@ -354,7 +359,7 @@ class Dashboard(QWidget):
         self._shot_dir = "data"
         self._plan = {"mode": proto.MODE_STOP, "angle": 90,
                       "dir1": 0, "spd1": 0, "dir2": 0, "spd2": 0,
-                      "brush": "000", "brush_speed": 60, "light": 0}
+                      "brush": "00000", "brush_speed": 60, "light": 0}
         self._cmd_count = 0
         self._boot = time.time()
         self._fps = 0.0
@@ -532,8 +537,10 @@ class Dashboard(QWidget):
         self._nav_items[0].setChecked(True)
         lay.addStretch(1)
 
-        # 系统状态面板
+        # 系统状态面板（梁展翔式：撑满侧栏 + 大字）
         sys_box, sys_body = _panel("系统状态", GREEN)
+        sys_box.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        sys_body.setSpacing(8)
         rows = [
             ("电源电压", "voltage", "%.1f V", TXT, "volt"),
             ("剩余电量", "battery", "%.0f%%", GREEN, "battery"),
@@ -543,20 +550,21 @@ class Dashboard(QWidget):
         ]
         self._sys_rows = []
         for label, key, fmt, col, icon in rows:
-            r, v = _kv(label, fmt % (_ZERO[key]), col, mono=True, icon=icon)
+            r, v = _kv(label, fmt % (_ZERO[key]), col, mono=True, icon=icon,
+                       lab_size=16, val_size=20, icon_size=26)
             sys_body.addLayout(r)
             self._sys_rows.append((v, key, fmt, col))
             if label == "剩余电量":
                 pbar = QProgressBar()
                 pbar.setRange(0, 100)
                 pbar.setValue(0)
-                pbar.setFixedHeight(10)
+                pbar.setFixedHeight(14)
                 pbar.setObjectName("batBar")
                 pbar.setTextVisible(False)   # 隐藏条内文字，避免遮挡（电量值由右侧标签显示）
                 self._bat_bar = pbar
                 sys_body.addWidget(pbar)
         shield = QLabel("🛡 一切正常")
-        shield.setStyleSheet("color:%s; font-size:17px; font-weight:800;" % GREEN)
+        shield.setStyleSheet("color:%s; font-size:16px; font-weight:800;" % GREEN)
         sys_body.addWidget(shield)
         lay.addWidget(sys_box)
         return side
@@ -645,8 +653,8 @@ class Dashboard(QWidget):
         """QGC 式首页：顶部紧凑状态条 + 左侧视频主画面(撑满) + 右侧/底部紧凑卡片(贴内容)"""
         page = QWidget()
         outer = QVBoxLayout(page)
-        outer.setContentsMargins(10, 6, 10, 6)
-        outer.setSpacing(8)
+        outer.setContentsMargins(8, 4, 8, 4)
+        outer.setSpacing(4)
         outer.addWidget(self._toolbar())
 
         self._video_box, self._video_body = _panel("实时画面 · CAM 01", CYAN)
@@ -658,10 +666,10 @@ class Dashboard(QWidget):
 
         # 主区：左视频(主画面, 撑满) + 右紧凑卡片列(贴内容, 顶部对齐)
         main = QHBoxLayout()
-        main.setSpacing(8)
+        main.setSpacing(6)
         main.addWidget(self._video_box, 5)
         right = QVBoxLayout()
-        right.setSpacing(8)
+        right.setSpacing(6)
         for b in (self._equip_box, self._motion_box):
             b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)   # 高度贴内容, 不再撑满
         right.addWidget(self._equip_box)
@@ -670,14 +678,14 @@ class Dashboard(QWidget):
         main.addLayout(right, 4)
         outer.addLayout(main, 1)
 
-        # 底部紧凑横带：任务信息 / 传感器数据 / 推进器输出与告警
+        # 底部紧凑横带：任务信息 / 传感器数据 / 推进器输出与告警（Expanding 填满）
         bottom = QHBoxLayout()
-        bottom.setSpacing(8)
+        bottom.setSpacing(6)
         for b in (self._task_box, self._sensor_box, self._alarm_box):
-            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        self._task_box.setMinimumHeight(150)
-        self._sensor_box.setMinimumHeight(150)
-        self._alarm_box.setMinimumHeight(150)
+            b.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self._task_box.setMinimumHeight(132)
+        self._sensor_box.setMinimumHeight(132)
+        self._alarm_box.setMinimumHeight(132)
         bottom.addWidget(self._task_box, 1)
         bottom.addWidget(self._sensor_box, 1)
         bottom.addWidget(self._alarm_box, 2)
@@ -1333,9 +1341,9 @@ class Dashboard(QWidget):
         page = QWidget()
         grid = QGridLayout(page)
         grid.setContentsMargins(10, 6, 10, 6)
-        grid.setSpacing(10)
-       # grid.setColumnStretch(0, 1)
-       # grid.setColumnStretch(1, 1)
+        grid.setSpacing(22)
+        #grid.setColumnStretch(0, 1)
+        #grid.setColumnStretch(1, 1)
 
         box, body = _panel("系统设置 · 主控连接", CYAN)
         r = QHBoxLayout()
@@ -1395,7 +1403,7 @@ class Dashboard(QWidget):
         brow.addWidget(btn_exp)
         brow.addWidget(btn_imp)
         body.addLayout(brow)
-        #grid.addWidget(box, 0, 0)
+       # grid.addWidget(box, 0, 0)
 
         # 视频与数据设置（每路独立的 端口/帧率/画质）
         vbox, vbody = _panel("视频与数据（CAM1 / CAM2 画面设置）", GREEN)
@@ -1436,7 +1444,7 @@ class Dashboard(QWidget):
         vbody.addLayout(v2)
         #grid.addWidget(vbox, 0, 1)
         v_layout = QVBoxLayout()
-        v_layout.setSpacing(20)  # 两个卡片之间的距离，从10改成20
+        v_layout.setSpacing(32)  # 数字越大，各间距越大
         v_layout.setContentsMargins(0, 20, 0, 20)  # 上下也加一点留白
         v_layout.addWidget(box)
         v_layout.addWidget(vbox)
@@ -1453,7 +1461,7 @@ class Dashboard(QWidget):
         grid.setColumnStretch(0, 3)
         grid.setColumnStretch(1, 2)
         for b in (box, vbox, about):
-            b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+            b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         grid.setRowStretch(0, 1)
         grid.setRowStretch(1, 1)
         return page
@@ -1579,7 +1587,7 @@ class Dashboard(QWidget):
         btn_clear.setObjectName("ghostBtn")
         btn_clear.clicked.connect(self._clear_records)
         filt.addWidget(btn_clear)
-        self.layout = body.addLayout(filt)
+        body.addLayout(filt)
 
         self._data_table = QTableWidget(0, 4)
         self._data_table.setHorizontalHeaderLabels(["时间", "类型", "内容", "描述"])
@@ -1741,51 +1749,55 @@ class Dashboard(QWidget):
         body.addWidget(osd_frame)
 
         vrow = QHBoxLayout()
+        vrow.setSpacing(10)
+
+        # CAM1 视频（左）
+        cam1_col = QVBoxLayout()
+        cam1_col.setSpacing(3)
+        cap1 = QLabel("● CAM 01")
+        cap1.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % GREEN)
+        cam1_col.addWidget(cap1)
         self._video_label = QLabel("CAM 01 未连接（连接主控后显示）")
         self._video_label.setObjectName("video")
         self._video_label.setAlignment(Qt.AlignCenter)
-        self._video_label.setMinimumSize(560, 300)
+        self._video_label.setMinimumSize(320, 220)
         self._video_label.setScaledContents(False)
-        self._video_label.setMinimumHeight(300)
-        vrow.addWidget(self._video_label, 1)
+        cam1_col.addWidget(self._video_label, 1)
+        vrow.addLayout(cam1_col, 1)
 
-        # 深度指示：自绘仪表（刻度+填充+数值严格对齐）
+        # CAM2 视频（右，与 CAM1 等大，可隐藏）
+        self._cam2_widget = QWidget()
+        c2lay = QVBoxLayout(self._cam2_widget)
+        c2lay.setContentsMargins(0, 0, 0, 0)
+        c2lay.setSpacing(3)
+        cap2 = QLabel("● CAM 02")
+        cap2.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % CYAN)
+        c2lay.addWidget(cap2)
+        self._video_label2 = QLabel("CAM 02 待接入（端口 12346）")
+        self._video_label2.setObjectName("video")
+        self._video_label2.setAlignment(Qt.AlignCenter)
+        self._video_label2.setMinimumSize(320, 220)
+        c2lay.addWidget(self._video_label2, 1)
+        vrow.addWidget(self._cam2_widget, 1)
+
+        # 深度指示（右侧窄列）
         depth_col = QVBoxLayout()
         depth_lbl = QLabel("深度指示 (m)")
         depth_lbl.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % TXT_SUB)
         depth_lbl.setAlignment(Qt.AlignLeft)
         self._depth_gauge = DepthGauge()
         depth_col.addWidget(depth_lbl)
-        depth_col.addWidget(self._depth_gauge, 1)
+        depth_col.addWidget(self._depth_gauge, 5)
         depth_col.addStretch(1)
         vrow.addLayout(depth_col)
         body.addLayout(vrow, 1)
 
-        # CAM2 小窗（首页第二路，可隐藏）
-        self._cam2_widget = QWidget()
-        c2lay = QVBoxLayout(self._cam2_widget)
-        c2lay.setContentsMargins(0, 0, 0, 0)
-        c2lay.setSpacing(3)
-        c2h = QHBoxLayout()
-        cap2 = QLabel("● CAM 02")
-        cap2.setStyleSheet("color:%s; font-size:15px; font-weight:700;" % CYAN)
+        # 底栏（视频控制）
+        bar = QHBoxLayout()
         self._hide_cam2_btn = QCheckBox("隐藏 CAM2")
         self._hide_cam2_btn.setChecked(False)
         self._hide_cam2_btn.toggled.connect(self._toggle_cam2_hidden)
-        c2h.addWidget(cap2)
-        c2h.addStretch(1)
-        c2h.addWidget(self._hide_cam2_btn)
-        c2lay.addLayout(c2h)
-        self._video_label2 = QLabel("CAM 02 待接入（端口 12346）")
-        self._video_label2.setObjectName("video")
-        self._video_label2.setAlignment(Qt.AlignCenter)
-        self._video_label2.setMinimumSize(200, 110)
-        self._video_label2.setMaximumHeight(150)
-        c2lay.addWidget(self._video_label2, 1)
-        body.addWidget(self._cam2_widget)
-
-        # 底栏（视频控制）
-        bar = QHBoxLayout()
+        bar.addWidget(self._hide_cam2_btn)
         bar.addStretch(1)
         self._btn_video = QPushButton("打开视频")
         self._btn_photo = QPushButton("📷 截图")
@@ -1883,7 +1895,7 @@ class Dashboard(QWidget):
         ]
         self._status_rows = []
         for label, value, color in rows:
-            rr, val = _kv(label, value, color)
+            rr, val = _kv(label, value, color, lab_size=16, val_size=18, lab_bold=True)
             col.addLayout(rr)
             self._status_rows.append((label, val))
         col.addStretch(1)
@@ -1976,29 +1988,61 @@ class Dashboard(QWidget):
         ctrl.addWidget(self._btn_e)
         body.addLayout(ctrl)
 
-        # 灯光 & 刷子 & 转速 快捷
-        q = QHBoxLayout()
-        q.addWidget(QLabel("灯光"))
+        # 推进器级数 & 电机组合（运动映射）
+        cfg = QHBoxLayout()
+        cfg.setSpacing(10)
+        cfg.addWidget(QLabel("推进器级数"))
+        self._thr_level = QComboBox()
+        self._thr_level.addItems(["低速", "中速", "高速"])
+        self._thr_level.setCurrentIndex(2)   # 默认高速
+        cfg.addWidget(self._thr_level)
+        cfg.addWidget(QLabel("电机组合"))
+        self._motor_combo = QComboBox()
+        self._motor_combo.addItems(["双推正转", "差速转向", "镜像转向"])
+        self._motor_combo.setCurrentIndex(0)
+        cfg.addWidget(self._motor_combo)
+        cfg.addStretch(1)
+        body.addLayout(cfg)
+
+        # 灯光（多灯开关 + 亮度）
+        lrow = QHBoxLayout()
+        lrow.setSpacing(8)
+        lrow.addWidget(QLabel("灯光"))
+        self._light1 = QCheckBox("灯1")
+        self._light2 = QCheckBox("灯2")
+        self._light3 = QCheckBox("灯3")
+        for b in (self._light1, self._light2, self._light3):
+            b.setStyleSheet("color:%s;" % TXT)
+            b.toggled.connect(self._apply_light)
+            lrow.addWidget(b)
+        lrow.addWidget(QLabel("亮度"))
         self._light = QSlider(Qt.Horizontal)
         self._light.setRange(0, 100)
         self._light.valueChanged.connect(self._on_light)
-        q.addWidget(self._light, 1)
-        q.addWidget(QLabel("刷速"))
+        lrow.addWidget(self._light, 1)
+        body.addLayout(lrow)
+
+        # 刷子（三路开关 + 转速）
+        brow = QHBoxLayout()
+        brow.setSpacing(8)
+        brow.addWidget(QLabel("刷子"))
+        self._b1 = QCheckBox("小刷1")
+        self._b2 = QCheckBox("小刷2")
+        self._b3 = QCheckBox("小刷3")
+        self._b4 = QCheckBox("小刷4")
+        self._blarge = QCheckBox("大刷")
+        for b in (self._b1, self._b2, self._b3, self._b4, self._blarge):
+            b.setStyleSheet("color:%s;" % TXT)
+            b.toggled.connect(self._on_brush)
+            brow.addWidget(b)
+        brow.addWidget(QLabel("刷速"))
         self._bs = QSpinBox()
         self._bs.setRange(0, 100)
         self._bs.setValue(60)
         self._bs.valueChanged.connect(self._on_bs)
-        q.addWidget(self._bs)
-        self._b1 = QCheckBox("刷1")
-        self._b2 = QCheckBox("刷2")
-        self._b3 = QCheckBox("刷3")
-        for b in (self._b1, self._b2, self._b3):
-            b.setStyleSheet("color:%s;" % TXT)
-            b.toggled.connect(self._on_brush)
-        q.addWidget(self._b1)
-        q.addWidget(self._b2)
-        q.addWidget(self._b3)
-        body.addLayout(q)
+        brow.addWidget(self._bs)
+        brow.addStretch(1)
+        body.addLayout(brow)
 
     def _build_task(self):
         body = self._task_body
@@ -2039,9 +2083,9 @@ class Dashboard(QWidget):
         # 推进器输出（软著 2 通道：左/右）—— 实时 PWM 柱状图
         bars = QHBoxLayout()
         bars.setSpacing(16)
-        for tag, name, color, bar_attr, pwm_attr in (
-                ("T1", "左", GREEN, "_bar_l", "_pwm_l"),
-                ("T2", "右", CYAN, "_bar_r", "_pwm_r")):
+        for tag, name, color, bar_attr, pwm_attr, dir_attr in (
+                ("T1", "左", GREEN, "_bar_l", "_pwm_l", "_dir_l"),
+                ("T2", "右", CYAN, "_bar_r", "_pwm_r", "_dir_r")):
             lay = QVBoxLayout()
             lay.setSpacing(4)
             hrow = QHBoxLayout()
@@ -2052,6 +2096,10 @@ class Dashboard(QWidget):
             nm.setStyleSheet("color:%s; font-size:11px;" % TXT_SUB)
             hrow.addWidget(hd)
             hrow.addWidget(nm)
+            dirl = QLabel("停止")
+            dirl.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % TXT_SUB)
+            hrow.addWidget(dirl)
+            setattr(self, dir_attr, dirl)
             hrow.addStretch(1)
             pwmL = QLabel("PWM")
             pwmL.setStyleSheet("color:%s; font-size:10px;" % TXT_SUB)
@@ -2144,7 +2192,7 @@ class Dashboard(QWidget):
         self._receiver = recv
         # 回安全状态（并同步快捷控件显示）
         self._plan.update(mode=proto.MODE_STOP, dir1=0, spd1=0, dir2=0, spd2=0,
-                          brush="000", brush_speed=0, light=0)
+                          brush="00000", brush_speed=0, light=0)
         self._sync_quick_ui()
         self._send_plan(announce=False)
         self.connect_cam2(quiet=True)   # 主控连上后顺带尝试 CAM2 视频通道
@@ -2322,17 +2370,31 @@ class Dashboard(QWidget):
             self._flash("未连接主控", "warn")
             return
         self._ensure_running()
-        spd = 150
-        mirror = getattr(self, "_thruster_layout", "normal") == "mirror"
+        # 推进器级数 -> 速度
+        level_f = {0: 0.6, 1: 0.85, 2: 1.0}.get(self._thr_level.currentIndex(), 1.0)
+        spd = int(150 * level_f)
+        combo = self._motor_combo.currentIndex()   # 0双推正转 1差速转向 2镜像转向
+        # 电机组合 决定直行/转弯 两路方向与转速
         if action == "forward":
-            d1, d2 = (-1, 1) if mirror else (1, 1)
+            d1, d2, spd1, spd2 = 1, 1, spd, spd
         elif action == "backward":
-            d1, d2 = (1, -1) if mirror else (-1, -1)
+            d1, d2, spd1, spd2 = -1, -1, spd, spd
         elif action == "left":
-            d1, d2 = (-1, -1) if mirror else (-1, 1)
+            if combo == 1:      # 差速转向：左慢右快（双正转）
+                d1, d2, spd1, spd2 = 1, 1, int(spd * 0.5), spd
+            else:               # 双推/镜像：左侧反转
+                d1, d2, spd1, spd2 = -1, 1, spd, spd
+        elif action == "right":
+            if combo == 1:      # 差速转向：左快右慢（双正转）
+                d1, d2, spd1, spd2 = 1, 1, spd, int(spd * 0.5)
+            else:
+                d1, d2, spd1, spd2 = 1, -1, spd, spd
         else:
-            d1, d2 = (1, 1) if mirror else (1, -1)
-        self._plan.update(dir1=d1, spd1=spd, dir2=d2, spd2=spd)
+            d1, d2, spd1, spd2 = 1, 1, spd, spd
+        mirror = getattr(self, "_thruster_layout", "normal") == "mirror"
+        if mirror:
+            d1, d2 = -d1, -d2
+        self._plan.update(dir1=d1, spd1=spd1, dir2=d2, spd2=spd2)
         self._send_plan()
 
     def start_run(self):
@@ -2342,27 +2404,39 @@ class Dashboard(QWidget):
 
     def stop_idle(self):
         self._plan.update(mode=proto.MODE_STOP, dir1=0, spd1=0, dir2=0, spd2=0,
-                          brush="000", brush_speed=0, light=0)
+                          brush="00000", brush_speed=0, light=0)
         self._sync_quick_ui()
         self._flash("停止待机(00)：全部复位", "ok")
         self._send_plan()
 
     def emergency(self):
         self._plan.update(mode=proto.MODE_STOP, dir1=0, spd1=0, dir2=0, spd2=0,
-                          brush="000", brush_speed=0, light=0)
+                          brush="00000", brush_speed=0, light=0)
         line = proto.emergency_stop_command()
         self._flash("！！！ 急停（%s）" % line, "err")
         self._raw_send(line)
         self._sync_quick_ui()
 
     def _on_light(self, v):
+        self._apply_light()
+
+    def _apply_light(self, *_):
+        """多灯：任一路灯开启则亮度生效，否则关灯。"""
+        on = False
+        if hasattr(self, "_light1"):
+            on = any(b.isChecked() for b in (self._light1, self._light2, self._light3))
+        elif self._light.value() > 0:
+            on = True
+        v = self._light.value() if (on and hasattr(self, "_light")) else 0
         self._plan["light"] = v
-        self._btn_light.setText("☀ 灯光%d" % v)
+        if hasattr(self, "_btn_light"):
+            self._btn_light.setText("☀ 灯光%d" % v)
         self._send_plan(announce=False)
 
     def light_toggle(self):
         cur = self._light.value()
         self._light.setValue(0 if cur > 0 else 80)
+        self._apply_light()
 
     def _on_bs(self, v):
         self._plan["brush_speed"] = v
@@ -2370,16 +2444,22 @@ class Dashboard(QWidget):
 
     def _on_brush(self, _=None):
         self._plan["brush"] = "".join(
-            "1" if b.isChecked() else "0" for b in (self._b1, self._b2, self._b3))
+            "1" if b.isChecked() else "0"
+            for b in (self._b1, self._b2, self._b3, self._b4, self._blarge))
         self._send_plan(announce=False)
 
     def _sync_quick_ui(self):
         p = self._plan
+        if getattr(self, "_light1", None) is not None:
+            on = p["light"] > 0
+            self._light1.setChecked(on)
+            self._light2.setChecked(False)
+            self._light3.setChecked(False)
         self._light.setValue(p["light"])
         self._bs.setValue(int(p["brush_speed"]))
-        self._b1.setChecked(p["brush"][0] == "1")
-        self._b2.setChecked(p["brush"][1] == "1")
-        self._b3.setChecked(p["brush"][2] == "1")
+        # 刷子 5 位：小刷1~4 + 大刷
+        for i, b in enumerate((self._b1, self._b2, self._b3, self._b4, self._blarge)):
+            b.setChecked(p["brush"][i] == "1")
 
     def _sync_bars(self):
         p = self._plan
@@ -2391,6 +2471,14 @@ class Dashboard(QWidget):
             self._pwm_l.setText(str(int(mag1)))
         if hasattr(self, "_pwm_r"):
             self._pwm_r.setText(str(int(mag2)))
+        # 方向：正转/反转/停止
+        for dattr, d in (("_dir_l", p["dir1"]), ("_dir_r", p["dir2"])):
+            lab = getattr(self, dattr, None)
+            if lab is not None:
+                txt = "正转" if d > 0 else ("反转" if d < 0 else "停止")
+                col = GREEN if d > 0 else (RED if d < 0 else TXT_SUB)
+                lab.setText(txt)
+                lab.setStyleSheet("color:%s; font-size:12px; font-weight:700;" % col)
         if getattr(self, "_thr_ind", None):
             for (dot, val), m in zip(self._thr_ind, (mag1, mag2)):
                 val.setText("%d%%" % int(100 * m / 255.0))
@@ -2546,8 +2634,8 @@ QPushButton#iconBtn { border:none; background:transparent; font-size:18px;
     color:%(sub)s; border-radius:8px; }
 QPushButton#iconBtn:hover { background:rgba(49,196,243,40); color:#fff; }
 
-QPushButton#navBtn { text-align:left; padding:8px 14px; border-radius:8px;
-    border:none; color:%(sub)s; font-size:16px; }
+QPushButton#navBtn { text-align:left; padding:11px 12px; border-radius:6px;
+    border:none; color:%(sub)s; font-size:17px; }
 QPushButton#navBtn:hover { background:rgba(49,196,243,30); color:#eaf7ff; }
 QPushButton#navBtn:checked { background:rgba(49,196,243,44); color:#ffffff; font-weight:800;
     border-left:4px solid #9fe7ff; }
